@@ -19,7 +19,143 @@ const HOTEL_COLORS = {
 // Език
 let currentLanguage = 'bg';
 
-// ТОЧНИ МАРШРУТИ с реални GPS координати и СЕГМЕНТИ от улици
+// ЗАБЕЛЕЖИТЕЛНОСТИ В СОФИЯ
+const LANDMARKS = [
+  {
+    id: 1,
+    name_bg: '🏛️ НДК',
+    name_en: '🏛️ NDK',
+    description_bg: 'Национален дворец на културата - най-големият конгресен център в Югоизточна Европа',
+    description_en: 'National Palace of Culture - the largest congress center in Southeast Europe',
+    lat: 42.68546,
+    lng: 23.31992,
+    category: 'culture',
+    icon: '🏛️'
+  },
+  {
+    id: 2,
+    name_bg: '🌳 Борисова градина',
+    name_en: '🌳 Borisova Garden',
+    description_bg: 'Най-старият и любим парк на софиянци - идеален за разходка',
+    description_en: 'The oldest and most beloved park of Sofia residents - perfect for a walk',
+    lat: 42.69300,
+    lng: 23.33000,
+    category: 'park',
+    icon: '🌳'
+  },
+  {
+    id: 3,
+    name_bg: '🌳 Южен парк',
+    name_en: '🌳 South Park',
+    description_bg: 'Най-големият парк в София с множество алеи за бягане',
+    description_en: 'The largest park in Sofia with many running trails',
+    lat: 42.66550,
+    lng: 23.30580,
+    category: 'park',
+    icon: '🌳'
+  },
+  {
+    id: 4,
+    name_bg: '🌳 Ловен парк',
+    name_en: '🌳 Lozen Park',
+    description_bg: 'Красив парк с езеро и алеи - скрит бижу в София',
+    description_en: 'Beautiful park with a lake and alleys - a hidden gem in Sofia',
+    lat: 42.66790,
+    lng: 23.33370,
+    category: 'park',
+    icon: '🌳'
+  },
+  {
+    id: 5,
+    name_bg: '🌊 Езеро Ариана',
+    name_en: '🌊 Ariana Lake',
+    description_bg: 'Живописно езеро в Борисова градина - място за почивка',
+    description_en: 'Picturesque lake in Borisova Garden - a place to rest',
+    lat: 42.69090,
+    lng: 23.33630,
+    category: 'nature',
+    icon: '🌊'
+  },
+  {
+    id: 6,
+    name_bg: '🏛️ Народен театър "Иван Вазов"',
+    name_en: '🏛️ Ivan Vazov National Theatre',
+    description_bg: 'Емблематичен театър в центъра на София - архитектурен паметник',
+    description_en: 'Iconic theatre in the center of Sofia - architectural monument',
+    lat: 42.69200,
+    lng: 23.32700,
+    category: 'culture',
+    icon: '🎭'
+  },
+  {
+    id: 7,
+    name_bg: '🏛️ Народно събрание',
+    name_en: '🏛️ National Assembly',
+    description_bg: 'Българският парламент - символ на демокрацията',
+    description_en: 'The Bulgarian Parliament - symbol of democracy',
+    lat: 42.69700,
+    lng: 23.33300,
+    category: 'culture',
+    icon: '🏛️'
+  },
+  {
+    id: 8,
+    name_bg: '🏛️ СУ "Св. Климент Охридски"',
+    name_en: '🏛️ Sofia University "St. Kliment Ohridski"',
+    description_bg: 'Най-старият университет в България - основан през 1888 г.',
+    description_en: 'The oldest university in Bulgaria - founded in 1888',
+    lat: 42.69350,
+    lng: 23.33500,
+    category: 'education',
+    icon: '🎓'
+  },
+  {
+    id: 9,
+    name_bg: '⛪️ Църква "Света Неделя"',
+    name_en: '⛪️ St. Nedelya Church',
+    description_bg: 'Известна православна църква в центъра на София',
+    description_en: 'Famous Orthodox church in the center of Sofia',
+    lat: 42.69780,
+    lng: 23.32100,
+    category: 'religious',
+    icon: '⛪️'
+  },
+  {
+    id: 10,
+    name_bg: '⛪️ Александър Невски',
+    name_en: '⛪️ Alexander Nevsky Cathedral',
+    description_bg: 'Най-голямата православна катедрала на Балканския полуостров',
+    description_en: 'The largest Orthodox cathedral on the Balkan Peninsula',
+    lat: 42.69550,
+    lng: 23.33200,
+    category: 'religious',
+    icon: '⛪️'
+  },
+  {
+    id: 11,
+    name_bg: '🏛️ Руски паметник',
+    name_en: '🏛️ Russian Monument',
+    description_bg: 'Паметник на руските освободители от Освобождението',
+    description_en: 'Monument to the Russian liberators from the Liberation',
+    lat: 42.68300,
+    lng: 23.32500,
+    category: 'monument',
+    icon: '🏛️'
+  },
+  {
+    id: 12,
+    name_bg: '🍽️ Кафе "Витоша"',
+    name_en: '🍽️ Vitosha Cafe',
+    description_bg: 'Популярно кафе на бул. Витоша - идеално за почивка',
+    description_en: 'Popular cafe on Vitosha Blvd - perfect for a break',
+    lat: 42.68600,
+    lng: 23.31900,
+    category: 'food',
+    icon: '☕'
+  }
+];
+
+// ТОЧНИ МАРШРУТИ
 const RUNNING_ROUTES = [
   {
     id: 1,
@@ -81,13 +217,12 @@ const RUNNING_ROUTES = [
       { start: 22, end: 25, name_bg: 'ул. Христо Смирненски', name_en: 'Hristo Smirnenski St' },
       { start: 25, end: 37, name_bg: 'бул. Витоша', name_en: 'Vitoshka Blvd' }
     ],
+    landmark_ids: [3, 11],
     warnings_bg: [
-      { lat: 42.68270, lng: 23.31350, message: '⚠️ Внимавай! Пресичаш бул. "Витоша" на пешеходна пътека' },
-      { lat: 42.66550, lng: 23.30580, message: '⚠️ Внимавай за велосипедисти на входа на парка' }
+      { lat: 42.68270, lng: 23.31350, message: '⚠️ Внимавай! Пресичаш бул. "Витоша" на пешеходна пътека' }
     ],
     warnings_en: [
-      { lat: 42.68270, lng: 23.31350, message: '⚠️ Caution! Crossing "Vitoshka" Blvd on pedestrian crossing' },
-      { lat: 42.66550, lng: 23.30580, message: '⚠️ Watch for cyclists at the park entrance' }
+      { lat: 42.68270, lng: 23.31350, message: '⚠️ Caution! Crossing "Vitoshka" Blvd on pedestrian crossing' }
     ]
   },
   {
@@ -175,15 +310,14 @@ const RUNNING_ROUTES = [
       { start: 52, end: 55, name_bg: 'НДК', name_en: 'NDK' },
       { start: 55, end: 59, name_bg: 'бул. Витоша', name_en: 'Vitoshka Blvd' }
     ],
+    landmark_ids: [1, 2, 5, 6, 7, 8, 10, 12],
     warnings_bg: [
       { lat: 42.68546, lng: 23.31992, message: '⚠️ Внимавай! Голямо движение пред НДК' },
-      { lat: 42.69090, lng: 23.33630, message: '⚠️ Внимавай! Около езерото Ариана е хлъзгаво' },
-      { lat: 42.69190, lng: 23.34180, message: '⚠️ Внимавай! Това е краят на парка - обърни се' }
+      { lat: 42.69090, lng: 23.33630, message: '⚠️ Внимавай! Около езерото Ариана е хлъзгаво' }
     ],
     warnings_en: [
       { lat: 42.68546, lng: 23.31992, message: '⚠️ Caution! Heavy traffic near NDK' },
-      { lat: 42.69090, lng: 23.33630, message: '⚠️ Caution! Around Ariana Lake is slippery' },
-      { lat: 42.69190, lng: 23.34180, message: '⚠️ Caution! This is the end of the park - turn around' }
+      { lat: 42.69090, lng: 23.33630, message: '⚠️ Caution! Around Ariana Lake is slippery' }
     ]
   },
   {
@@ -360,15 +494,14 @@ const RUNNING_ROUTES = [
       { start: 110, end: 120, name_bg: 'Южен парк', name_en: 'South Park' },
       { start: 120, end: 128, name_bg: 'бул. Витоша', name_en: 'Vitoshka Blvd' }
     ],
+    landmark_ids: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
     warnings_bg: [
       { lat: 42.68270, lng: 23.31350, message: '⚠️ Внимавай! Пресичаш бул. "Витоша" на пешеходна пътека' },
-      { lat: 42.66550, lng: 23.30580, message: '⚠️ Внимавай за велосипедисти на входа на Южен парк' },
       { lat: 42.66790, lng: 23.33370, message: '⚠️ Внимавай! Влизаш в Ловен парк' },
       { lat: 42.69850, lng: 23.35450, message: '⚠️ Това е най-далечната точка - обърни се!' }
     ],
     warnings_en: [
       { lat: 42.68270, lng: 23.31350, message: '⚠️ Caution! Crossing "Vitoshka" Blvd on pedestrian crossing' },
-      { lat: 42.66550, lng: 23.30580, message: '⚠️ Watch for cyclists at South Park entrance' },
       { lat: 42.66790, lng: 23.33370, message: '⚠️ Caution! Entering Lozen Park' },
       { lat: 42.69850, lng: 23.35450, message: '⚠️ This is the farthest point - turn around!' }
     ]
@@ -393,7 +526,9 @@ function getTexts(lang) {
     close: lang === 'bg' ? '✖ Затвори' : '✖ Close',
     back: lang === 'bg' ? '◀ Към маршрутите' : '◀ Back to routes',
     language: lang === 'bg' ? '🇬🇧 English' : '🇧🇬 Български',
-    safe: lang === 'bg' ? '✅ Безопасен маршрут' : '✅ Safe route'
+    safe: lang === 'bg' ? '✅ Безопасен маршрут' : '✅ Safe route',
+    landmarks: lang === 'bg' ? '📍 Забележителности по маршрута' : '📍 Landmarks on the route',
+    google_maps: lang === 'bg' ? '🗺️ Отвори в Google Maps' : '🗺️ Open in Google Maps'
   };
 }
 
@@ -438,7 +573,7 @@ function getWeather() {
   return { weather_bg, weather_en, temp, icon, hour };
 }
 
-// Функция за навигация с правилни сегменти
+// Функция за навигация
 function getTurnByTurnDirections(route, lang) {
   const directions = [];
   const points = route.points;
@@ -593,6 +728,51 @@ document.addEventListener('DOMContentLoaded', function() {
         📍 бул. Витоша 106
       </div>
     `);
+
+  // Функция за добавяне на забележителности
+  function addLandmarks(routeLandmarkIds) {
+    // Изчисти старите забележителности
+    const oldLandmarks = [];
+    map.eachLayer(function(layer) {
+      if (layer.options && layer.options.landmark) {
+        oldLandmarks.push(layer);
+      }
+    });
+    oldLandmarks.forEach(function(layer) {
+      map.removeLayer(layer);
+    });
+    
+    // Добави новите забележителности
+    LANDMARKS.forEach(function(landmark) {
+      if (routeLandmarkIds && !routeLandmarkIds.includes(landmark.id)) {
+        return;
+      }
+      
+      const name = lang === 'bg' ? landmark.name_bg : landmark.name_en;
+      const description = lang === 'bg' ? landmark.description_bg : landmark.description_en;
+      
+      // Създай иконка за забележителността
+      const landmarkIcon = L.divIcon({
+        className: 'landmark-marker',
+        html: landmark.icon || '📍',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+      
+      const marker = L.marker([landmark.lat, landmark.lng], { 
+        icon: landmarkIcon,
+        landmark: true 
+      }).addTo(map);
+      
+      marker.bindPopup(`
+        <div style="text-align: center; font-size: 12px; max-width: 200px;">
+          <div style="font-size: 16px; font-weight: 700; color: ${HOTEL_COLORS.primary};">${name}</div>
+          <div style="font-size: 11px; color: #666; margin: 4px 0;">${description}</div>
+          <div style="font-size: 10px; color: #999; margin-top: 4px;">📍 ${lang === 'bg' ? 'Забележителност' : 'Landmark'}</div>
+        </div>
+      `);
+    });
+  }
 
   // Панел
   const panel = document.createElement('div');
@@ -825,6 +1005,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+  // Функция за отваряне в Google Maps
+  function openInGoogleMaps(route) {
+    const startPoint = route.points[0];
+    const endPoint = route.points[route.points.length - 1];
+    const url = `https://www.google.com/maps/dir/${startPoint[0]},${startPoint[1]}/${endPoint[0]},${endPoint[1]}/@${startPoint[0]},${startPoint[1]},15z/data=!4m2!4m1!3e2`;
+    window.open(url, '_blank');
+  }
+
   // Функция за показване на детайли
   function showRouteDetails(route) {
     const lang = currentLanguage;
@@ -839,6 +1027,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const name = lang === 'bg' ? route.name_bg : route.name_en;
     const warnings = lang === 'bg' ? route.warnings_bg : route.warnings_en;
     const directions = getTurnByTurnDirections(route, lang);
+    
+    // Намери забележителностите за този маршрут
+    const routeLandmarks = LANDMARKS.filter(function(lm) {
+      return route.landmark_ids && route.landmark_ids.includes(lm.id);
+    });
+    
+    let landmarksHtml = '';
+    if (routeLandmarks.length > 0) {
+      landmarksHtml = `
+        <div style="margin-top: 8px; background: #e8f5e9; border-radius: 6px; padding: 8px 10px; border-left: 3px solid ${HOTEL_COLORS.gold};">
+          <div style="font-size: 11px; font-weight: 700; color: ${HOTEL_COLORS.primary}; margin-bottom: 4px;">${texts.landmarks}</div>
+          ${routeLandmarks.map(function(lm) {
+            const lmName = lang === 'bg' ? lm.name_bg : lm.name_en;
+            return '<div style="font-size: 10px; color: #555; padding: 1px 0;">' + lm.icon + ' ' + lmName + '</div>';
+          }).join('')}
+        </div>
+      `;
+    }
     
     let warningsHtml = '';
     if (warnings && warnings.length > 0) {
@@ -863,16 +1069,28 @@ document.addEventListener('DOMContentLoaded', function() {
           cursor: pointer;
           font-weight: 600;
         ">${texts.back}</button>
-        <button id="hide-panel-btn" style="
-          padding: 4px 12px;
-          background: ${HOTEL_COLORS.primary};
-          color: white;
-          border: none;
-          border-radius: 6px;
-          font-size: 12px;
-          cursor: pointer;
-          font-weight: 600;
-        ">🗺️ Карта</button>
+        <div style="display: flex; gap: 6px;">
+          <button id="google-maps-btn" style="
+            padding: 4px 12px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+          ">${texts.google_maps}</button>
+          <button id="hide-panel-btn" style="
+            padding: 4px 12px;
+            background: ${HOTEL_COLORS.primary};
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+          ">🗺️ Карта</button>
+        </div>
       </div>
       <div style="margin-top: 4px;">
         <div style="background: #d4edda; border: 1px solid #28a745; border-radius: 6px; padding: 6px 10px; margin-bottom: 8px;">
@@ -880,7 +1098,8 @@ document.addEventListener('DOMContentLoaded', function() {
           <span style="font-size: 11px; color: #155724; font-weight: 600;">${texts.safe}</span>
         </div>
         ${warningsHtml}
-        <h4 style="margin: 0 0 4px 0; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${texts.navigation}</h4>
+        ${landmarksHtml}
+        <h4 style="margin: 8px 0 4px 0; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${texts.navigation}</h4>
         <div style="background: #f8f9fa; border-radius: 6px; padding: 6px 10px; max-height: 100px; overflow-y: auto; font-size: 11px; line-height: 1.6; border-left: 3px solid ${HOTEL_COLORS.primary};">
           ${directions.map(function(d) { return '<div style="padding: 1px 0;">' + d + '</div>'; }).join('')}
         </div>
@@ -914,11 +1133,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     detailsDiv.innerHTML = navHtml;
     
+    // Покажи забележителностите на картата
+    addLandmarks(route.landmark_ids);
     showRouteOnMap(route);
     
     document.getElementById('back-to-routes-btn').addEventListener('click', function() {
       routeList.style.display = 'block';
       detailsDiv.style.display = 'none';
+      addLandmarks([]);
       map.eachLayer(function(layer) {
         if (layer instanceof L.Polyline) {
           layer.setStyle({ opacity: 0.8 });
@@ -931,6 +1153,10 @@ document.addEventListener('DOMContentLoaded', function() {
       hidePanel();
     });
     
+    document.getElementById('google-maps-btn').addEventListener('click', function() {
+      openInGoogleMaps(route);
+    });
+    
     document.getElementById('start-route-btn').addEventListener('click', function() {
       startRoute(route);
       setTimeout(function() {
@@ -941,6 +1167,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('close-details-btn').addEventListener('click', function() {
       routeList.style.display = 'block';
       detailsDiv.style.display = 'none';
+      addLandmarks([]);
       map.eachLayer(function(layer) {
         if (layer instanceof L.Polyline) {
           layer.setStyle({ opacity: 0.8 });
@@ -1144,6 +1371,20 @@ document.addEventListener('DOMContentLoaded', function() {
     .start-marker, .end-marker { background: transparent !important; border: none !important; font-size: 20px !important; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
     .warning-marker { background: transparent !important; border: none !important; font-size: 18px !important; text-shadow: 0 0 8px rgba(255,0,0,0.4); animation: pulse-warning 1s infinite; }
     .pulse-marker { background: transparent !important; border: none !important; font-size: 12px !important; }
+    .landmark-marker { 
+      background: rgba(255,255,255,0.9) !important; 
+      border: 2px solid ${HOTEL_COLORS.gold} !important; 
+      border-radius: 50% !important; 
+      text-align: center !important; 
+      line-height: 28px !important; 
+      font-size: 14px !important; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+      width: 32px !important;
+      height: 32px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
     
     @keyframes pulse-warning {
       0% { transform: scale(1); }
@@ -1163,6 +1404,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     #lang-toggle:hover { background: rgba(255,255,255,0.25) !important; }
     #panel-handle:hover { opacity: 0.8; }
+    #google-maps-btn:hover { opacity: 0.9; }
     
     @media (max-width: 768px) {
       #main-panel { max-height: 60vh; border-radius: 16px 16px 0 0; }
@@ -1174,8 +1416,8 @@ document.addEventListener('DOMContentLoaded', function() {
       #main-panel { max-height: 55vh; border-radius: 12px 12px 0 0; }
       #main-panel .route-item { padding: 6px 8px; margin-bottom: 4px; }
       .leaflet-control-zoom a { width: 26px !important; height: 26px !important; line-height: 26px !important; font-size: 12px !important; }
+      .landmark-marker { width: 28px !important; height: 28px !important; line-height: 24px !important; font-size: 12px !important; }
     }
   `;
   document.head.appendChild(style);
 });
-// Force new deploy
