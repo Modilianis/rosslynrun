@@ -18,7 +18,7 @@ const HOTEL_COLORS = {
 // Език
 let currentLanguage = 'bg';
 
-// ТОЧНИ МАРШРУТИ с реални GPS координати
+// ТОЧНИ МАРШРУТИ с реални GPS координати и СЕГМЕНТИ от улици
 const RUNNING_ROUTES = [
   {
     id: 1,
@@ -71,17 +71,15 @@ const RUNNING_ROUTES = [
       [42.68480, 23.31600],
       [42.68550, 23.31870]
     ],
-    streets_bg: [
-      'бул. Витоша',
-      'ул. Христо Смирненски',
-      'алея Южен парк',
-      'централна алея'
-    ],
-    streets_en: [
-      'Vitoshka Blvd',
-      'Hristo Smirnenski St',
-      'South Park Alley',
-      'Central Alley'
+    // СЕГМЕНТИ - всяка група точки е на определена улица
+    segments: [
+      { start: 0, end: 3, name_bg: 'бул. Витоша', name_en: 'Vitoshka Blvd' },
+      { start: 3, end: 6, name_bg: 'ул. Христо Смирненски', name_en: 'Hristo Smirnenski St' },
+      { start: 6, end: 15, name_bg: 'алея Южен парк', name_en: 'South Park Alley' },
+      { start: 15, end: 19, name_bg: 'централна алея', name_en: 'Central Alley' },
+      { start: 19, end: 22, name_bg: 'алея Южен парк', name_en: 'South Park Alley' },
+      { start: 22, end: 25, name_bg: 'ул. Христо Смирненски', name_en: 'Hristo Smirnenski St' },
+      { start: 25, end: 37, name_bg: 'бул. Витоша', name_en: 'Vitoshka Blvd' }
     ],
     warnings_bg: [
       { lat: 42.68270, lng: 23.31350, message: '⚠️ Внимавай! Пресичаш бул. "Витоша" на пешеходна пътека' },
@@ -166,19 +164,16 @@ const RUNNING_ROUTES = [
       [42.68560, 23.31900],
       [42.68550, 23.31870]
     ],
-    streets_bg: [
-      'бул. Витоша',
-      'НДК',
-      'бул. Евлоги Георгиев',
-      'алея Борисова градина',
-      'езеро Ариана'
-    ],
-    streets_en: [
-      'Vitoshka Blvd',
-      'NDK',
-      'Evlogi Georgiev Blvd',
-      'Borisova Garden Alley',
-      'Ariana Lake'
+    segments: [
+      { start: 0, end: 4, name_bg: 'бул. Витоша', name_en: 'Vitoshka Blvd' },
+      { start: 4, end: 8, name_bg: 'НДК', name_en: 'NDK' },
+      { start: 8, end: 23, name_bg: 'бул. Евлоги Георгиев', name_en: 'Evlogi Georgiev Blvd' },
+      { start: 23, end: 31, name_bg: 'алея Борисова градина', name_en: 'Borisova Garden Alley' },
+      { start: 31, end: 37, name_bg: 'езеро Ариана', name_en: 'Ariana Lake' },
+      { start: 37, end: 45, name_bg: 'алея Борисова градина', name_en: 'Borisova Garden Alley' },
+      { start: 45, end: 52, name_bg: 'бул. Евлоги Георгиев', name_en: 'Evlogi Georgiev Blvd' },
+      { start: 52, end: 55, name_bg: 'НДК', name_en: 'NDK' },
+      { start: 55, end: 59, name_bg: 'бул. Витоша', name_en: 'Vitoshka Blvd' }
     ],
     warnings_bg: [
       { lat: 42.68546, lng: 23.31992, message: '⚠️ Внимавай! Голямо движение пред НДК' },
@@ -354,19 +349,16 @@ const RUNNING_ROUTES = [
       [42.68480, 23.31600],
       [42.68550, 23.31870]
     ],
-    streets_bg: [
-      'бул. Витоша',
-      'Южен парк',
-      'бул. Никола Габровски',
-      'Ловен парк',
-      'алея Борисова градина'
-    ],
-    streets_en: [
-      'Vitoshka Blvd',
-      'South Park',
-      'Nikola Gabrovski Blvd',
-      'Lozen Park',
-      'Borisova Garden Alley'
+    segments: [
+      { start: 0, end: 4, name_bg: 'бул. Витоша', name_en: 'Vitoshka Blvd' },
+      { start: 4, end: 22, name_bg: 'Южен парк', name_en: 'South Park' },
+      { start: 22, end: 37, name_bg: 'бул. Никола Габровски', name_en: 'Nikola Gabrovski Blvd' },
+      { start: 37, end: 55, name_bg: 'Ловен парк', name_en: 'Lozen Park' },
+      { start: 55, end: 80, name_bg: 'алея Борисова градина', name_en: 'Borisova Garden Alley' },
+      { start: 80, end: 95, name_bg: 'Ловен парк', name_en: 'Lozen Park' },
+      { start: 95, end: 110, name_bg: 'бул. Никола Габровски', name_en: 'Nikola Gabrovski Blvd' },
+      { start: 110, end: 120, name_bg: 'Южен парк', name_en: 'South Park' },
+      { start: 120, end: 128, name_bg: 'бул. Витоша', name_en: 'Vitoshka Blvd' }
     ],
     warnings_bg: [
       { lat: 42.68270, lng: 23.31350, message: '⚠️ Внимавай! Пресичаш бул. "Витоша" на пешеходна пътека' },
@@ -445,57 +437,68 @@ function getWeather() {
   return { weather_bg, weather_en, temp, icon, hour };
 }
 
-// Функция за навигация с имена на улици
-function getTurnByTurnDirections(routePoints, routeName, lang, streets) {
+// Функция за навигация с правилни сегменти
+function getTurnByTurnDirections(route, lang) {
   const directions = [];
-  let streetIndex = 0;
+  const points = route.points;
+  const segments = route.segments;
+  const isBg = lang === 'bg';
   
-  for (let i = 0; i < routePoints.length - 1; i++) {
-    const current = routePoints[i];
-    const next = routePoints[i + 1];
-    const latDiff = next[0] - current[0];
-    const lngDiff = next[1] - current[1];
-    let direction = '';
-    let distance = '';
+  // Старт
+  const firstStreet = isBg ? segments[0].name_bg : segments[0].name_en;
+  directions.push(`🚀 Старт от хотела - ${firstStreet}`);
+  
+  // Минаваме през всички сегменти
+  for (let s = 0; s < segments.length; s++) {
+    const segment = segments[s];
+    const streetName = isBg ? segment.name_bg : segment.name_en;
+    const startIdx = segment.start;
+    const endIdx = segment.end;
     
+    // Изчисляваме разстоянието за този сегмент
+    let totalDist = 0;
+    for (let i = startIdx; i < endIdx && i < points.length - 1; i++) {
+      const p1 = points[i];
+      const p2 = points[i + 1];
+      const latDiff = p2[0] - p1[0];
+      const lngDiff = p2[1] - p1[1];
+      totalDist += Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111000;
+    }
+    
+    // Пропускаме твърде малки сегменти
+    if (totalDist < 20) continue;
+    
+    // Определяме посоката за този сегмент
+    const pStart = points[startIdx];
+    const pEnd = points[Math.min(endIdx, points.length - 1)];
+    const latDiff = pEnd[0] - pStart[0];
+    const lngDiff = pEnd[1] - pStart[1];
+    
+    let dirIcon = '';
     if (Math.abs(latDiff) > Math.abs(lngDiff)) {
-      direction = latDiff > 0 ? '⬇️' : '⬆️';
+      dirIcon = latDiff > 0 ? '⬇️' : '⬆️';
     } else {
-      direction = lngDiff > 0 ? '➡️' : '⬅️';
+      dirIcon = lngDiff > 0 ? '➡️' : '⬅️';
     }
     
-    const distMeters = Math.round(Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111000);
-    distance = distMeters < 1000 ? distMeters + 'м' : (distMeters / 1000).toFixed(1) + 'км';
-    
-    let streetName = '';
-    if (streets && streetIndex < streets.length) {
-      streetName = streets[streetIndex];
-    }
-    
-    if (i > 0 && i % 5 === 0 && streetIndex < streets.length - 1) {
-      streetIndex++;
-      streetName = streets[streetIndex];
-    }
-    
-    if (i === 0) {
-      if (lang === 'bg') {
-        directions.push(`🚀 Старт - ${streets[0] || 'бул. Витоша 106'}`);
-      } else {
-        directions.push(`🚀 Start - ${streets[0] || 'Vitoshka Blvd 106'}`);
-      }
+    let distText = '';
+    if (totalDist >= 1000) {
+      distText = (totalDist / 1000).toFixed(1) + ' км';
     } else {
-      const dirText = lang === 'bg' ? 
-        `${direction} ${distance} ${streetName || ''}` :
-        `${direction} ${distance} ${streetName || ''}`;
-      directions.push(dirText);
+      distText = Math.round(totalDist) + ' м';
+    }
+    
+    if (s === 0) {
+      // Първи сегмент - вече сме го обработили като старт
+      continue;
+    } else {
+      directions.push(`${dirIcon} ${distText} по ${streetName}`);
     }
   }
   
-  if (lang === 'bg') {
-    directions.push(`🏁 Финал - ${streets[0] || 'бул. Витоша 106'}`);
-  } else {
-    directions.push(`🏁 Finish - ${streets[0] || 'Vitoshka Blvd 106'}`);
-  }
+  // Финал
+  const lastStreet = isBg ? segments[segments.length - 1].name_bg : segments[segments.length - 1].name_en;
+  directions.push(`🏁 Финал - ${lastStreet}`);
   
   return directions;
 }
@@ -509,9 +512,8 @@ function toggleLanguage() {
   location.reload();
 }
 
-// Изчакай DOM да се зареди
+// Останалият код (инициализация на картата, UI и т.н.)
 document.addEventListener('DOMContentLoaded', function() {
-  // Вземи езика от localStorage
   const savedLang = localStorage.getItem('preferredLanguage');
   if (savedLang) {
     currentLanguage = savedLang;
@@ -551,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
   }).addTo(map);
 
-  // Добави контрол за смяна на типа карта (опростен за мобилни)
+  // Добави контрол за смяна на типа карта
   const baseLayers = {
     "🗺️": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
       attribution: '&copy; Google Maps'
@@ -562,11 +564,9 @@ document.addEventListener('DOMContentLoaded', function() {
   };
 
   L.control.layers(baseLayers, null, { position: 'bottomright' }).addTo(map);
-
-  // Добави zoom контрол
   L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-  // Създай маркер за хотела (по-малък за мобилни)
+  // Маркер за хотела
   const hotelIconHtml = `
     <div style="
       background: ${HOTEL_COLORS.primary};
@@ -600,7 +600,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </div>
     `);
 
-  // Създай главния панел - мобилно оптимизиран
+  // Панел
   const panel = document.createElement('div');
   panel.id = 'main-panel';
   panel.style.cssText = `
@@ -616,11 +616,10 @@ document.addEventListener('DOMContentLoaded', function() {
     overflow-y: auto;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     padding: 0;
-    transition: max-height 0.3s ease;
     border-top: 3px solid ${HOTEL_COLORS.primary};
   `;
   
-  // Header - опростен за мобилни
+  // Header
   const header = document.createElement('div');
   header.style.cssText = `
     padding: 14px 16px 10px 16px;
@@ -658,7 +657,7 @@ document.addEventListener('DOMContentLoaded', function() {
   `;
   panel.appendChild(header);
 
-  // Време - опростено
+  // Време
   const weather = getWeather();
   const weatherDiv = document.createElement('div');
   weatherDiv.style.cssText = `
@@ -682,7 +681,7 @@ document.addEventListener('DOMContentLoaded', function() {
   `;
   panel.appendChild(weatherDiv);
 
-  // Статистики - опростени
+  // Статистики
   const totalDistance = RUNNING_ROUTES.reduce((sum, r) => sum + r.distance, 0);
   
   const statsBar = document.createElement('div');
@@ -714,7 +713,7 @@ document.addEventListener('DOMContentLoaded', function() {
   `;
   panel.appendChild(statsBar);
 
-  // Списък с маршрути - скролващ
+  // Списък с маршрути
   const routeSection = document.createElement('div');
   routeSection.style.cssText = 'padding: 10px 14px; max-height: 35vh; overflow-y: auto;';
   routeSection.innerHTML = `
@@ -740,9 +739,6 @@ document.addEventListener('DOMContentLoaded', function() {
       cursor: pointer;
       transition: all 0.2s;
     `;
-    item.ontouchend = function() {
-      showRouteDetails(route);
-    };
     item.onclick = function() {
       showRouteDetails(route);
     };
@@ -796,8 +792,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const name = lang === 'bg' ? route.name_bg : route.name_en;
     const warnings = lang === 'bg' ? route.warnings_bg : route.warnings_en;
-    const streets = lang === 'bg' ? route.streets_bg : route.streets_en;
-    const directions = getTurnByTurnDirections(route.points, name, lang, streets);
+    const directions = getTurnByTurnDirections(route, lang);
     
     let warningsHtml = '';
     if (warnings && warnings.length > 0) {
@@ -1052,7 +1047,7 @@ document.addEventListener('DOMContentLoaded', function() {
     map.fitBounds(bounds, { padding: [40, 40] });
   }
 
-  // CSS - мобилно оптимизиран
+  // CSS
   const style = document.createElement('style');
   style.textContent = `
     * { margin: 0; padding: 0; box-sizing: border-box; }
