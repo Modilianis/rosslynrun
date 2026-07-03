@@ -71,7 +71,6 @@ const RUNNING_ROUTES = [
       [42.68480, 23.31600],
       [42.68550, 23.31870]
     ],
-    // СЕГМЕНТИ - всяка група точки е на определена улица
     segments: [
       { start: 0, end: 3, name_bg: 'бул. Витоша', name_en: 'Vitoshka Blvd' },
       { start: 3, end: 6, name_bg: 'ул. Христо Смирненски', name_en: 'Hristo Smirnenski St' },
@@ -391,6 +390,7 @@ function getTexts(lang) {
     calories: lang === 'bg' ? 'Калории' : 'Calories',
     start_route: lang === 'bg' ? '🏃 Стартирай' : '🏃 Start',
     close: lang === 'bg' ? '✖ Затвори' : '✖ Close',
+    back: lang === 'bg' ? '◀ Към маршрутите' : '◀ Back to routes',
     language: lang === 'bg' ? '🇬🇧 English' : '🇧🇬 Български',
     safe: lang === 'bg' ? '✅ Безопасен маршрут' : '✅ Safe route'
   };
@@ -444,18 +444,15 @@ function getTurnByTurnDirections(route, lang) {
   const segments = route.segments;
   const isBg = lang === 'bg';
   
-  // Старт
   const firstStreet = isBg ? segments[0].name_bg : segments[0].name_en;
   directions.push(`🚀 Старт от хотела - ${firstStreet}`);
   
-  // Минаваме през всички сегменти
   for (let s = 0; s < segments.length; s++) {
     const segment = segments[s];
     const streetName = isBg ? segment.name_bg : segment.name_en;
     const startIdx = segment.start;
     const endIdx = segment.end;
     
-    // Изчисляваме разстоянието за този сегмент
     let totalDist = 0;
     for (let i = startIdx; i < endIdx && i < points.length - 1; i++) {
       const p1 = points[i];
@@ -465,10 +462,8 @@ function getTurnByTurnDirections(route, lang) {
       totalDist += Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111000;
     }
     
-    // Пропускаме твърде малки сегменти
     if (totalDist < 20) continue;
     
-    // Определяме посоката за този сегмент
     const pStart = points[startIdx];
     const pEnd = points[Math.min(endIdx, points.length - 1)];
     const latDiff = pEnd[0] - pStart[0];
@@ -489,14 +484,12 @@ function getTurnByTurnDirections(route, lang) {
     }
     
     if (s === 0) {
-      // Първи сегмент - вече сме го обработили като старт
       continue;
     } else {
       directions.push(`${dirIcon} ${distText} по ${streetName}`);
     }
   }
   
-  // Финал
   const lastStreet = isBg ? segments[segments.length - 1].name_bg : segments[segments.length - 1].name_en;
   directions.push(`🏁 Финал - ${lastStreet}`);
   
@@ -512,7 +505,7 @@ function toggleLanguage() {
   location.reload();
 }
 
-// Останалият код (инициализация на картата, UI и т.н.)
+// Изчакай DOM да се зареди
 document.addEventListener('DOMContentLoaded', function() {
   const savedLang = localStorage.getItem('preferredLanguage');
   if (savedLang) {
@@ -617,6 +610,8 @@ document.addEventListener('DOMContentLoaded', function() {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     padding: 0;
     border-top: 3px solid ${HOTEL_COLORS.primary};
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(0);
   `;
   
   // Header
@@ -713,8 +708,14 @@ document.addEventListener('DOMContentLoaded', function() {
   `;
   panel.appendChild(statsBar);
 
+  // Контейнер за списък с маршрути и детайли
+  const contentContainer = document.createElement('div');
+  contentContainer.id = 'content-container';
+  panel.appendChild(contentContainer);
+
   // Списък с маршрути
   const routeSection = document.createElement('div');
+  routeSection.id = 'route-list';
   routeSection.style.cssText = 'padding: 10px 14px; max-height: 35vh; overflow-y: auto;';
   routeSection.innerHTML = `
     <p style="margin: 0 0 8px 0; color: ${HOTEL_COLORS.primary}; font-size: 12px; font-weight: 700; border-bottom: 2px solid ${HOTEL_COLORS.primary}; padding-bottom: 4px;">
@@ -766,13 +767,13 @@ document.addEventListener('DOMContentLoaded', function() {
     list.appendChild(item);
   });
   routeSection.appendChild(list);
-  panel.appendChild(routeSection);
+  contentContainer.appendChild(routeSection);
 
-  // Детайли за маршрута
+  // Детайли за маршрута (скрит по подразбиране)
   const detailsDiv = document.createElement('div');
   detailsDiv.id = 'route-details';
-  detailsDiv.style.cssText = 'padding: 0 14px 14px 14px; display: none; border-top: 2px solid ' + HOTEL_COLORS.primary + '; max-height: 45vh; overflow-y: auto;';
-  panel.appendChild(detailsDiv);
+  detailsDiv.style.cssText = 'padding: 0 14px 14px 14px; display: none; max-height: 45vh; overflow-y: auto;';
+  contentContainer.appendChild(detailsDiv);
 
   app.appendChild(panel);
 
@@ -782,11 +783,55 @@ document.addEventListener('DOMContentLoaded', function() {
     toggleLanguage();
   });
 
+  // Функция за скриване на панела
+  function hidePanel() {
+    const panel = document.getElementById('main-panel');
+    panel.style.transform = 'translateY(calc(100% - 60px))';
+    // Показваме малък индикатор, че панелът може да се върне
+    const handle = document.createElement('div');
+    handle.id = 'panel-handle';
+    handle.style.cssText = `
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1001;
+      background: ${HOTEL_COLORS.primary};
+      color: white;
+      padding: 8px 20px;
+      border-radius: 20px 20px 0 0;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+    `;
+    handle.textContent = '▲ ' + (currentLanguage === 'bg' ? 'Покажи маршрутите' : 'Show routes');
+    handle.onclick = function() {
+      showPanel();
+    };
+    document.body.appendChild(handle);
+  }
+
+  // Функция за показване на панела
+  function showPanel() {
+    const panel = document.getElementById('main-panel');
+    panel.style.transform = 'translateY(0)';
+    const handle = document.getElementById('panel-handle');
+    if (handle) {
+      handle.remove();
+    }
+  }
+
   // Функция за показване на детайли
   function showRouteDetails(route) {
     const lang = currentLanguage;
     const texts = getTexts(lang);
+    const routeList = document.getElementById('route-list');
     const detailsDiv = document.getElementById('route-details');
+    
+    // Скриваме списъка и показваме детайлите
+    routeList.style.display = 'none';
     detailsDiv.style.display = 'block';
     detailsDiv.innerHTML = '';
     
@@ -806,7 +851,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     const navHtml = `
-      <div style="margin-top: 10px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <button id="back-to-routes-btn" style="
+          padding: 4px 12px;
+          background: #e9ecef;
+          color: ${HOTEL_COLORS.primary};
+          border: none;
+          border-radius: 6px;
+          font-size: 12px;
+          cursor: pointer;
+          font-weight: 600;
+        ">${texts.back}</button>
+        <button id="hide-panel-btn" style="
+          padding: 4px 12px;
+          background: ${HOTEL_COLORS.primary};
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 12px;
+          cursor: pointer;
+          font-weight: 600;
+        ">🗺️ Карта</button>
+      </div>
+      <div style="margin-top: 4px;">
         <div style="background: #d4edda; border: 1px solid #28a745; border-radius: 6px; padding: 6px 10px; margin-bottom: 8px;">
           <span style="font-size: 12px;">🛡️</span>
           <span style="font-size: 11px; color: #155724; font-weight: 600;">${texts.safe}</span>
@@ -848,11 +915,33 @@ document.addEventListener('DOMContentLoaded', function() {
     
     showRouteOnMap(route);
     
+    // Бутон за връщане към списъка с маршрути
+    document.getElementById('back-to-routes-btn').addEventListener('click', function() {
+      routeList.style.display = 'block';
+      detailsDiv.style.display = 'none';
+      map.eachLayer(function(layer) {
+        if (layer instanceof L.Polyline) {
+          layer.setStyle({ opacity: 0.8 });
+        }
+      });
+      map.setView([HOTEL.lat, HOTEL.lng], 14);
+    });
+    
+    // Бутон за скриване на панела (само карта)
+    document.getElementById('hide-panel-btn').addEventListener('click', function() {
+      hidePanel();
+    });
+    
     document.getElementById('start-route-btn').addEventListener('click', function() {
       startRoute(route);
+      // След стартиране скриваме панела автоматично
+      setTimeout(function() {
+        hidePanel();
+      }, 500);
     });
     
     document.getElementById('close-details-btn').addEventListener('click', function() {
+      routeList.style.display = 'block';
       detailsDiv.style.display = 'none';
       map.eachLayer(function(layer) {
         if (layer instanceof L.Polyline) {
@@ -1075,6 +1164,7 @@ document.addEventListener('DOMContentLoaded', function() {
     .leaflet-control-zoom { border: none !important; box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important; }
     
     #lang-toggle:hover { background: rgba(255,255,255,0.25) !important; }
+    #panel-handle:hover { opacity: 0.8; }
     
     @media (max-width: 768px) {
       #main-panel { max-height: 60vh; border-radius: 16px 16px 0 0; }
