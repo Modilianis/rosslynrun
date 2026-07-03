@@ -1,0 +1,743 @@
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+
+// Rosslyn Central Park Hotel Sofia - бул. Витоша 106
+const HOTEL = { 
+  lat: 42.68582621132048, 
+  lng: 23.31720190009477,
+  address: 'бул. Витоша 106, София'
+};
+
+// Цветове на хотела
+const HOTEL_COLORS = {
+  primary: '#1a237e',
+  secondary: '#0d47a1',
+  gold: '#ffd700',
+  goldLight: '#ffb300',
+  white: '#ffffff',
+  dark: '#0a0a2e'
+};
+
+// РЕАЛНИ МАРШРУТИ ЗА БЯГАНЕ В СОФИЯ
+const RUNNING_ROUTES = [
+  {
+    id: 1,
+    name: '🌳 Южен парк - 15 мин',
+    description: 'Бърза разходка в Южен парк - идеална за сутрешна енергия',
+    distance: 2.8,
+    duration: 15,
+    difficulty: 'Лесен',
+    calories: 180,
+    color: '#4CAF50',
+    points: [
+      [42.685826, 23.317202], // Хотел
+      [42.686500, 23.315000], // Към Южен парк
+      [42.687300, 23.313500], // Вход на парка
+      [42.688000, 23.312000], // Алея в парка
+      [42.688500, 23.310500], // Средата на парка
+      [42.688000, 23.309000], // Завой
+      [42.687300, 23.310500], // Обратно
+      [42.686500, 23.312000], // Изход от парка
+      [42.685826, 23.317202]  // Връщане в хотела
+    ]
+  },
+  {
+    id: 2,
+    name: '🏛️ Витоша-NDK - 45 мин',
+    description: 'Живописен маршрут покрай Витоша булевард до НДК и обратно',
+    distance: 6.5,
+    duration: 45,
+    difficulty: 'Среден',
+    calories: 420,
+    color: '#2196F3',
+    points: [
+      [42.685826, 23.317202], // Хотел
+      [42.685000, 23.319000], // Нагоре по Витоша
+      [42.684500, 23.320500], // Минаване покрай НДК
+      [42.683500, 23.321500], // НДК - северна страна
+      [42.682500, 23.320000], // Завой към НДК
+      [42.681500, 23.318500], // Южна страна на НДК
+      [42.680500, 23.317000], // Продължение
+      [42.681000, 23.315500], // Завой
+      [42.682000, 23.314000], // Обратно
+      [42.683000, 23.315500], // Към хотела
+      [42.684000, 23.316500], 
+      [42.685000, 23.317000],
+      [42.685826, 23.317202]  // Връщане в хотела
+    ]
+  },
+  {
+    id: 3,
+    name: '🏔️ Витоша - Борисова градина - 90 мин',
+    description: 'Дълъг маршрут покрай Витоша до Борисова градина и обратно',
+    distance: 12.0,
+    duration: 90,
+    difficulty: 'Труден',
+    calories: 750,
+    color: '#FF5722',
+    points: [
+      [42.685826, 23.317202], // Хотел
+      [42.687000, 23.319000], // Нагоре по бул. Витоша
+      [42.688500, 23.321500], // Продължение
+      [42.690000, 23.324000], // Към Борисова градина
+      [42.691500, 23.326000], // Вход на Борисова градина
+      [42.692500, 23.328000], // В парка
+      [42.693500, 23.330000], // Централна алея
+      [42.694000, 23.332000], // Езерото в парка
+      [42.693500, 23.334000], // Около езерото
+      [42.692500, 23.333000], // Завой
+      [42.691500, 23.331000], // Обратно
+      [42.690500, 23.329000], // Изход от парка
+      [42.689000, 23.326500], // Към Витоша
+      [42.687500, 23.324000], // Продължение
+      [42.686500, 23.321500], 
+      [42.685500, 23.319500],
+      [42.685826, 23.317202]  // Връщане в хотела
+    ]
+  }
+];
+
+// Функция за получаване на времето
+function getWeather() {
+  const now = new Date();
+  const hour = now.getHours();
+  let weather = '';
+  let temp = '';
+  let icon = '';
+  
+  if (hour >= 6 && hour < 10) {
+    weather = 'Слънчево утро';
+    temp = '18°C';
+    icon = '🌅';
+  } else if (hour >= 10 && hour < 14) {
+    weather = 'Слънчево';
+    temp = '24°C';
+    icon = '☀️';
+  } else if (hour >= 14 && hour < 18) {
+    weather = 'Частично облачно';
+    temp = '26°C';
+    icon = '⛅';
+  } else if (hour >= 18 && hour < 21) {
+    weather = 'Залез';
+    temp = '21°C';
+    icon = '🌅';
+  } else if (hour >= 21 && hour < 24) {
+    weather = 'Вечер';
+    temp = '17°C';
+    icon = '🌙';
+  } else {
+    weather = 'Нощ';
+    temp = '14°C';
+    icon = '🌙';
+  }
+  
+  return { weather, temp, icon, hour };
+}
+
+// Функция за навигация стъпка по стъпка с реални ориентири
+function getTurnByTurnDirections(routePoints, routeName) {
+  const directions = [];
+  const landmarks = {
+    'Южен парк': ['Вход Южен парк', 'Алея в парка', 'Езерото'],
+    'Витоша-NDK': ['НДК', 'Фонтана пред НДК', 'Бул. Витоша'],
+    'Витоша - Борисова градина': ['Борисова градина', 'Езерото с лебедите', 'Алеята на признателността']
+  };
+  
+  for (let i = 0; i < routePoints.length - 1; i++) {
+    const current = routePoints[i];
+    const next = routePoints[i + 1];
+    const latDiff = next[0] - current[0];
+    const lngDiff = next[1] - current[1];
+    let direction = '';
+    let distance = '';
+    
+    if (Math.abs(latDiff) > Math.abs(lngDiff)) {
+      direction = latDiff > 0 ? 'на юг' : 'на север';
+    } else {
+      direction = lngDiff > 0 ? 'на изток' : 'на запад';
+    }
+    
+    const distMeters = Math.round(Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111000);
+    distance = distMeters < 1000 ? distMeters + ' м' : (distMeters / 1000).toFixed(1) + ' км';
+    
+    if (i === 0) {
+      directions.push('🚀 Старт от хотела (бул. Витоша 106)');
+    } else if (i === Math.floor(routePoints.length / 2)) {
+      // Добавяме забележителност по средата на маршрута
+      if (routeName.includes('Южен парк')) {
+        directions.push('🌳 Среда на Южен парк - завой');
+      } else if (routeName.includes('Витоша-NDK')) {
+        directions.push('🏛️ Минаване покрай НДК');
+      } else if (routeName.includes('Борисова градина')) {
+        directions.push('🌲 Влизане в Борисова градина');
+      }
+    } else {
+      directions.push(`➡️ Продължи ${direction} - ${distance}`);
+    }
+  }
+  directions.push('🏁 Връщане в хотела (бул. Витоша 106)');
+  return directions;
+}
+
+// Изчакай DOM да се зареди
+document.addEventListener('DOMContentLoaded', function() {
+  var app = document.getElementById('app');
+  
+  // Създай контейнер за картата
+  var mapContainer = document.createElement('div');
+  mapContainer.id = 'map';
+  mapContainer.style.height = '100vh';
+  mapContainer.style.width = '100vw';
+  mapContainer.style.position = 'absolute';
+  mapContainer.style.top = '0';
+  mapContainer.style.left = '0';
+  mapContainer.style.zIndex = '1';
+  app.appendChild(mapContainer);
+
+  // Инициализирай картата
+  var map = L.map('map', {
+    center: [HOTEL.lat, HOTEL.lng],
+    zoom: 15,
+    zoomControl: true,
+    scrollWheelZoom: true,
+    dragging: true
+  });
+
+  // Добави Google Maps Tiles
+  L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    attribution: '&copy; Google Maps',
+    maxZoom: 20,
+    subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+  }).addTo(map);
+
+  // Добави контрол за смяна на типа карта
+  var baseLayers = {
+    "🗺️ Street": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      attribution: '&copy; Google Maps'
+    }),
+    "🛰️ Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+      attribution: '&copy; Google Maps'
+    }),
+    "🌍 Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      attribution: '&copy; Google Maps'
+    })
+  };
+
+  L.control.layers(baseLayers).addTo(map);
+
+  // Създай HTML маркер за хотела с лого
+  var hotelIconHtml = `
+    <div style="
+      background: ${HOTEL_COLORS.primary};
+      border-radius: 50%;
+      border: 3px solid ${HOTEL_COLORS.white};
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      text-align: center;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      position: relative;
+    ">
+      <img src="/hotel-logo.svg" style="width: 50px; height: 50px; border-radius: 50%;" />
+    </div>
+  `;
+
+  var hotelIcon = L.divIcon({
+    className: 'hotel-marker-custom',
+    html: hotelIconHtml,
+    iconSize: [60, 60],
+    iconAnchor: [30, 30]
+  });
+
+  var hotelMarker = L.marker([HOTEL.lat, HOTEL.lng], { icon: hotelIcon })
+    .addTo(map)
+    .bindPopup(`
+      <div style="text-align: center; font-family: Georgia, serif;">
+        <div style="font-size: 18px; font-weight: bold; color: ${HOTEL_COLORS.primary};">🏨 Rosslyn Central Park Hotel</div>
+        <div style="font-size: 12px; color: #666;">⭐⭐⭐⭐</div>
+        <div style="font-size: 12px; color: #666; margin-top: 4px;">📍 бул. Витоша 106, София</div>
+        <div style="font-size: 11px; color: ${HOTEL_COLORS.primary}; margin-top: 4px;">⭐ Начална и крайна точка</div>
+      </div>
+    `);
+
+  // Създай главния панел
+  var panel = document.createElement('div');
+  panel.id = 'main-panel';
+  panel.style.cssText = `
+    position: absolute; 
+    top: 20px; 
+    left: 20px; 
+    z-index: 1000; 
+    background: white; 
+    border-radius: 16px; 
+    box-shadow: 0 8px 32px rgba(26, 35, 126, 0.2); 
+    max-width: 420px; 
+    max-height: 90vh; 
+    overflow-y: auto; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    width: calc(100% - 40px);
+    border: 2px solid ${HOTEL_COLORS.white};
+  `;
+  
+  // Header с лого
+  var header = document.createElement('div');
+  header.style.cssText = `
+    padding: 20px 20px 15px 20px; 
+    background: linear-gradient(135deg, ${HOTEL_COLORS.primary}, ${HOTEL_COLORS.secondary});
+    border-radius: 14px 14px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  `;
+  header.innerHTML = `
+    <div style="
+      background: white;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid ${HOTEL_COLORS.white};
+      flex-shrink: 0;
+    ">
+      <img src="/hotel-logo.svg" style="width: 40px; height: 40px;" />
+    </div>
+    <div>
+      <h2 style="margin: 0; color: ${HOTEL_COLORS.white}; font-size: 20px; font-family: Georgia, serif; letter-spacing: 1px;">ROSSLYN</h2>
+      <p style="margin: 0; color: ${HOTEL_COLORS.white}; font-size: 11px; opacity: 0.9;">Central Park Hotel</p>
+      <p style="margin: 2px 0 0 0; color: ${HOTEL_COLORS.white}; font-size: 10px; opacity: 0.7;">📍 бул. Витоша 106, София</p>
+    </div>
+  `;
+  panel.appendChild(header);
+
+  // Време
+  var weather = getWeather();
+  var weatherDiv = document.createElement('div');
+  weatherDiv.style.cssText = `
+    padding: 12px 20px; 
+    background: #f8f9fa; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border-bottom: 2px solid ${HOTEL_COLORS.primary};
+  `;
+  weatherDiv.innerHTML = `
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 28px;">${weather.icon}</span>
+      <div>
+        <span style="font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 16px;">${weather.temp}</span>
+        <span style="color: #7f8c8d; font-size: 13px; margin-left: 4px;">${weather.weather}</span>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px; background: ${HOTEL_COLORS.primary}; padding: 4px 12px; border-radius: 20px; border: 1px solid ${HOTEL_COLORS.white};">
+      <span style="font-size: 18px;">🕐</span>
+      <span style="font-weight: 700; color: ${HOTEL_COLORS.white}; font-size: 16px;">${new Date().toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}</span>
+    </div>
+  `;
+  panel.appendChild(weatherDiv);
+
+  // Брой маршрути
+  var statsBar = document.createElement('div');
+  statsBar.style.cssText = `
+    padding: 8px 20px;
+    background: ${HOTEL_COLORS.primary};
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    color: ${HOTEL_COLORS.white};
+    font-size: 12px;
+  `;
+  statsBar.innerHTML = `
+    <div style="text-align: center;">
+      <div style="font-size: 18px;">🗺️</div>
+      <div style="font-weight: 700;">${RUNNING_ROUTES.length}</div>
+      <div style="font-size: 10px; opacity: 0.8;">Маршрута</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 18px;">📏</div>
+      <div style="font-weight: 700;">21.3 км</div>
+      <div style="font-size: 10px; opacity: 0.8;">Общо</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 18px;">⏱️</div>
+      <div style="font-weight: 700;">150 мин</div>
+      <div style="font-size: 10px; opacity: 0.8;">Общо време</div>
+    </div>
+  `;
+  panel.appendChild(statsBar);
+
+  // Списък с маршрути
+  var routeSection = document.createElement('div');
+  routeSection.style.cssText = 'padding: 15px 20px;';
+  routeSection.innerHTML = `
+    <p style="margin: 0 0 12px 0; color: ${HOTEL_COLORS.primary}; font-size: 14px; font-weight: 700; border-bottom: 2px solid ${HOTEL_COLORS.primary}; padding-bottom: 8px;">
+      🏃 Избери маршрут за бягане
+    </p>
+  `;
+  
+  var list = document.createElement('div');
+  RUNNING_ROUTES.forEach(function(route) {
+    var item = document.createElement('div');
+    var borderColor = route.color;
+    item.style.cssText = `
+      padding: 14px 16px; 
+      margin-bottom: 12px; 
+      border-left: 5px solid ${borderColor}; 
+      background: #f8f9fa; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      transition: all 0.3s;
+    `;
+    item.onmouseover = function() { 
+      this.style.backgroundColor = '#e9ecef'; 
+      this.style.transform = 'translateX(5px)'; 
+      this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+    };
+    item.onmouseout = function() { 
+      this.style.backgroundColor = '#f8f9fa'; 
+      this.style.transform = 'translateX(0)';
+      this.style.boxShadow = 'none';
+    };
+    
+    var difficultyStars = '';
+    if (route.difficulty === 'Лесен') difficultyStars = '⭐';
+    else if (route.difficulty === 'Среден') difficultyStars = '⭐⭐';
+    else difficultyStars = '⭐⭐⭐';
+    
+    // Времеви индикатор
+    var timeIcon = '';
+    if (route.duration <= 20) timeIcon = '⚡';
+    else if (route.duration <= 50) timeIcon = '🏃';
+    else timeIcon = '🏔️';
+    
+    item.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: start;">
+        <div style="flex: 1;">
+          <div style="font-weight: 700; color: #2c3e50; font-size: 16px;">${route.name}</div>
+          <div style="font-size: 12px; color: #7f8c8d; margin: 4px 0;">${route.description}</div>
+          <div style="display: flex; gap: 14px; font-size: 12px; color: #7f8c8d; margin-top: 6px; flex-wrap: wrap;">
+            <span>📏 ${route.distance} км</span>
+            <span>⏱️ ${route.duration} мин</span>
+            <span>🔥 ${route.calories} кал</span>
+            <span>${difficultyStars}</span>
+          </div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px; margin-left: 8px; align-items: flex-end;">
+          <span style="background: ${borderColor}; color: white; padding: 3px 12px; border-radius: 12px; font-size: 10px; white-space: nowrap; font-weight: 600;">${route.difficulty}</span>
+          <span style="font-size: 20px;">${timeIcon}</span>
+        </div>
+      </div>
+    `;
+    
+    item.onclick = function() {
+      showRouteDetails(route);
+    };
+    list.appendChild(item);
+  });
+  routeSection.appendChild(list);
+  panel.appendChild(routeSection);
+
+  // Детайли за маршрута (скрит по подразбиране)
+  var detailsDiv = document.createElement('div');
+  detailsDiv.id = 'route-details';
+  detailsDiv.style.cssText = 'padding: 0 20px 20px 20px; display: none; border-top: 2px solid ' + HOTEL_COLORS.primary + ';';
+  panel.appendChild(detailsDiv);
+
+  // Footer
+  var footer = document.createElement('div');
+  footer.style.cssText = `
+    padding: 12px 20px;
+    background: linear-gradient(135deg, ${HOTEL_COLORS.primary}, ${HOTEL_COLORS.secondary});
+    border-radius: 0 0 14px 14px;
+    text-align: center;
+    color: ${HOTEL_COLORS.white};
+    font-size: 10px;
+    opacity: 0.8;
+  `;
+  footer.innerHTML = `
+    <span style="color: ${HOTEL_COLORS.white};">✦</span> 
+    Rosslyn Central Park Hotel - бул. Витоша 106 
+    <span style="color: ${HOTEL_COLORS.white};">✦</span>
+    <br>
+    <span style="font-size: 8px; opacity: 0.6;">🌐 Google Maps</span>
+  `;
+  panel.appendChild(footer);
+
+  app.appendChild(panel);
+
+  // Функция за показване на детайли за маршрута
+  function showRouteDetails(route) {
+    var detailsDiv = document.getElementById('route-details');
+    detailsDiv.style.display = 'block';
+    detailsDiv.innerHTML = '';
+    
+    var directions = getTurnByTurnDirections(route.points, route.name);
+    
+    var navHtml = `
+      <div style="margin-top: 15px;">
+        <h4 style="margin: 0 0 8px 0; color: ${HOTEL_COLORS.primary}; font-size: 16px;">🧭 Навигация стъпка по стъпка</h4>
+        <div style="background: #f8f9fa; border-radius: 8px; padding: 10px 14px; max-height: 150px; overflow-y: auto; font-size: 13px; line-height: 1.8; border-left: 3px solid ${HOTEL_COLORS.primary};">
+          ${directions.map(function(d) { return '<div style="padding: 2px 0;">' + d + '</div>'; }).join('')}
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; text-align: center; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 8px; padding: 12px; border: 1px solid ${HOTEL_COLORS.primary};">
+        <div>
+          <span style="display: block; font-size: 20px;">📏</span>
+          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 16px;">${route.distance} км</span>
+          <span style="display: block; font-size: 10px; color: #7f8c8d;">Разстояние</span>
+        </div>
+        <div>
+          <span style="display: block; font-size: 20px;">⏱️</span>
+          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 16px;">${route.duration} мин</span>
+          <span style="display: block; font-size: 10px; color: #7f8c8d;">Време</span>
+        </div>
+        <div>
+          <span style="display: block; font-size: 20px;">🔥</span>
+          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 16px;">${route.calories} кал</span>
+          <span style="display: block; font-size: 10px; color: #7f8c8d;">Калории</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button id="start-route-btn" style="flex: 2; padding: 12px; background: linear-gradient(135deg, ${route.color}, ${route.color}dd); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+          🏃 Стартирай
+        </button>
+        <button id="close-details-btn" style="flex: 1; padding: 12px; background: #e9ecef; color: ${HOTEL_COLORS.primary}; border: 1px solid #dee2e6; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.3s;">
+          ✖ Затвори
+        </button>
+      </div>
+    `;
+    
+    detailsDiv.innerHTML = navHtml;
+    
+    showRouteOnMap(route);
+    
+    document.getElementById('start-route-btn').addEventListener('click', function() {
+      startRoute(route);
+    });
+    
+    document.getElementById('close-details-btn').addEventListener('click', function() {
+      detailsDiv.style.display = 'none';
+      map.eachLayer(function(layer) {
+        if (layer instanceof L.Polyline) {
+          layer.setStyle({ opacity: 0.8 });
+        }
+      });
+      map.setView([HOTEL.lat, HOTEL.lng], 15);
+    });
+    
+    detailsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function showRouteOnMap(route) {
+    var polylines = [];
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.Polyline) {
+        polylines.push(layer);
+      }
+    });
+    polylines.forEach(function(layer) {
+      map.removeLayer(layer);
+    });
+    
+    var polyline = L.polyline(route.points, {
+      color: route.color,
+      weight: 5,
+      opacity: 0.9,
+      smoothFactor: 1,
+      lineJoin: 'round'
+    }).addTo(map);
+    
+    route.points.forEach(function(point, index) {
+      if (index % 2 === 0 && index > 0 && index < route.points.length - 1) {
+        L.circleMarker(point, {
+          radius: 4,
+          fillColor: route.color,
+          color: '#fff',
+          weight: 2,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(map);
+      }
+    });
+    
+    var startPoint = route.points[0];
+    var endPoint = route.points[route.points.length - 1];
+    
+    var startIcon = L.divIcon({
+      className: 'start-marker',
+      html: '🏁',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+    });
+    
+    var endIcon = L.divIcon({
+      className: 'end-marker',
+      html: '🏁',
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+    });
+    
+    L.marker(startPoint, { icon: startIcon })
+      .addTo(map)
+      .bindPopup('<strong>🏁 Старт</strong><br>Хотел Rosslyn Central Park');
+    
+    L.marker(endPoint, { icon: endIcon })
+      .addTo(map)
+      .bindPopup('<strong>🏁 Финал</strong><br>Хотел Rosslyn Central Park');
+    
+    var bounds = L.latLngBounds(route.points);
+    map.fitBounds(bounds, { padding: [50, 50] });
+    
+    polyline.bindPopup('<strong>' + route.name + '</strong><br>📏 ' + route.distance + ' км | ⏱️ ' + route.duration + ' мин | 🔥 ' + route.calories + ' кал');
+    polyline.openPopup();
+  }
+
+  function startRoute(route) {
+    var startBtn = document.getElementById('start-route-btn');
+    startBtn.textContent = '⏳ Навигация...';
+    startBtn.style.background = '#28a745';
+    startBtn.disabled = true;
+    
+    var points = route.points;
+    var index = 0;
+    
+    var polylines = [];
+    map.eachLayer(function(layer) {
+      if (layer instanceof L.Polyline) {
+        polylines.push(layer);
+      }
+    });
+    polylines.forEach(function(layer) {
+      map.removeLayer(layer);
+    });
+    
+    var animatedPolyline = L.polyline([], {
+      color: route.color,
+      weight: 6,
+      opacity: 0.9,
+      smoothFactor: 1,
+      lineJoin: 'round'
+    }).addTo(map);
+    
+    var interval = setInterval(function() {
+      if (index < points.length) {
+        var currentPoints = animatedPolyline.getLatLngs();
+        var newPoint = L.latLng(points[index][0], points[index][1]);
+        currentPoints.push(newPoint);
+        animatedPolyline.setLatLngs(currentPoints);
+        
+        if (index > 0 && index % 3 === 0 && index < points.length - 1) {
+          var pulseIcon = L.divIcon({
+            className: 'pulse-marker',
+            html: '🔵',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+          L.marker(points[index], { icon: pulseIcon }).addTo(map);
+        }
+        
+        index++;
+      } else {
+        clearInterval(interval);
+        startBtn.textContent = '✅ Завършен!';
+        startBtn.style.background = '#28a745';
+        
+        var startIcon = L.divIcon({
+          className: 'start-marker',
+          html: '🏁',
+          iconSize: [40, 40],
+          iconAnchor: [20, 20]
+        });
+        
+        var endIcon = L.divIcon({
+          className: 'end-marker',
+          html: '🏁',
+          iconSize: [40, 40],
+          iconAnchor: [20, 20]
+        });
+        
+        L.marker(points[0], { icon: startIcon })
+          .addTo(map)
+          .bindPopup('🏁 Старт - Хотела');
+        
+        L.marker(points[points.length - 1], { icon: endIcon })
+          .addTo(map)
+          .bindPopup('🏁 Финал - Хотела');
+        
+        setTimeout(function() {
+          startBtn.textContent = '🏃 Стартирай отново';
+          startBtn.style.background = 'linear-gradient(135deg, ' + route.color + ', ' + route.color + 'dd)';
+          startBtn.disabled = false;
+          startBtn.onclick = function() {
+            showRouteDetails(route);
+          };
+        }, 2000);
+      }
+    }, 400);
+    
+    var bounds = L.latLngBounds(route.points);
+    map.fitBounds(bounds, { padding: [50, 50] });
+  }
+
+  // CSS
+  var style = document.createElement('style');
+  style.textContent = `
+    .hotel-marker-custom {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+    .start-marker, .end-marker {
+      background: transparent !important;
+      border: none !important;
+      font-size: 28px !important;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .pulse-marker {
+      background: transparent !important;
+      border: none !important;
+      font-size: 16px !important;
+    }
+    #main-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+    #main-panel::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 3px;
+    }
+    #main-panel::-webkit-scrollbar-thumb {
+      background: ${HOTEL_COLORS.primary};
+      border-radius: 3px;
+    }
+    #main-panel::-webkit-scrollbar-thumb:hover {
+      background: ${HOTEL_COLORS.secondary};
+    }
+    .leaflet-popup-content-wrapper {
+      border-radius: 12px !important;
+      border: 2px solid ${HOTEL_COLORS.primary} !important;
+    }
+    .leaflet-popup-tip {
+      background: ${HOTEL_COLORS.primary} !important;
+    }
+    .leaflet-control-layers {
+      border-radius: 8px !important;
+      border: 2px solid ${HOTEL_COLORS.primary} !important;
+    }
+    @media (max-width: 480px) {
+      #main-panel {
+        top: 10px;
+        left: 10px;
+        width: calc(100% - 20px);
+        max-height: 85vh;
+      }
+      .start-marker, .end-marker {
+        font-size: 20px !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+});
