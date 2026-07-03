@@ -389,7 +389,7 @@ function getTexts(lang) {
     title: 'Rosslyn Central Park Hotel',
     stars: '⭐⭐⭐⭐ Sofia',
     address: lang === 'bg' ? '📍 бул. Витоша 106' : '📍 106 Vitoshka Blvd',
-    routes: lang === 'bg' ? '🏃 Избери маршрут за бягане' : '🏃 Choose a running route',
+    routes: lang === 'bg' ? '🏃 Избери маршрут' : '🏃 Choose route',
     stats_routes: lang === 'bg' ? 'Маршрута' : 'Routes',
     stats_total: lang === 'bg' ? 'Общо' : 'Total',
     stats_time: lang === 'bg' ? 'Общо време' : 'Total time',
@@ -400,7 +400,7 @@ function getTexts(lang) {
     start_route: lang === 'bg' ? '🏃 Стартирай' : '🏃 Start',
     close: lang === 'bg' ? '✖ Затвори' : '✖ Close',
     language: lang === 'bg' ? '🇬🇧 English' : '🇧🇬 Български',
-    safe: lang === 'bg' ? '✅ Маршрутът е безопасен - само по тротоари и алеи' : '✅ Route is safe - only on sidewalks and trails'
+    safe: lang === 'bg' ? '✅ Безопасен маршрут' : '✅ Safe route'
   };
 }
 
@@ -465,15 +465,13 @@ function getTurnByTurnDirections(routePoints, routeName, lang, streets) {
     }
     
     const distMeters = Math.round(Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111000);
-    distance = distMeters < 1000 ? distMeters + ' м' : (distMeters / 1000).toFixed(1) + ' км';
+    distance = distMeters < 1000 ? distMeters + 'м' : (distMeters / 1000).toFixed(1) + 'км';
     
-    // Определяме текущата улица
     let streetName = '';
     if (streets && streetIndex < streets.length) {
       streetName = streets[streetIndex];
     }
     
-    // След определен брой точки, преминаваме към следващата улица
     if (i > 0 && i % 5 === 0 && streetIndex < streets.length - 1) {
       streetIndex++;
       streetName = streets[streetIndex];
@@ -481,42 +479,39 @@ function getTurnByTurnDirections(routePoints, routeName, lang, streets) {
     
     if (i === 0) {
       if (lang === 'bg') {
-        directions.push(`🚀 Старт от хотела - ${streets[0] || 'бул. Витоша 106'}`);
+        directions.push(`🚀 Старт - ${streets[0] || 'бул. Витоша 106'}`);
       } else {
-        directions.push(`🚀 Start from hotel - ${streets[0] || 'Vitoshka Blvd 106'}`);
+        directions.push(`🚀 Start - ${streets[0] || 'Vitoshka Blvd 106'}`);
       }
     } else {
       const dirText = lang === 'bg' ? 
-        `${direction} ${distance} по ${streetName || 'улицата'}` :
-        `${direction} ${distance} on ${streetName || 'the street'}`;
+        `${direction} ${distance} ${streetName || ''}` :
+        `${direction} ${distance} ${streetName || ''}`;
       directions.push(dirText);
     }
   }
   
   if (lang === 'bg') {
-    directions.push(`🏁 Връщане в хотела - ${streets[0] || 'бул. Витоша 106'}`);
-    directions.push('✅ Маршрутът е безопасен');
+    directions.push(`🏁 Финал - ${streets[0] || 'бул. Витоша 106'}`);
   } else {
-    directions.push(`🏁 Return to hotel - ${streets[0] || 'Vitoshka Blvd 106'}`);
-    directions.push('✅ Route is safe');
+    directions.push(`🏁 Finish - ${streets[0] || 'Vitoshka Blvd 106'}`);
   }
   
   return directions;
 }
 
-// Функция за смяна на езика - директно презареждане
+// Функция за смяна на езика
 function toggleLanguage() {
   const currentLang = currentLanguage;
   const newLang = currentLang === 'bg' ? 'en' : 'bg';
   currentLanguage = newLang;
-  // Запазваме в localStorage
   localStorage.setItem('preferredLanguage', newLang);
   location.reload();
 }
 
 // Изчакай DOM да се зареди
 document.addEventListener('DOMContentLoaded', function() {
-  // Вземи езика от localStorage или използвай 'bg' като default
+  // Вземи езика от localStorage
   const savedLang = localStorage.getItem('preferredLanguage');
   if (savedLang) {
     currentLanguage = savedLang;
@@ -529,21 +524,24 @@ document.addEventListener('DOMContentLoaded', function() {
   // Създай контейнер за картата
   const mapContainer = document.createElement('div');
   mapContainer.id = 'map';
-  mapContainer.style.height = '100vh';
-  mapContainer.style.width = '100vw';
-  mapContainer.style.position = 'absolute';
-  mapContainer.style.top = '0';
-  mapContainer.style.left = '0';
-  mapContainer.style.zIndex = '1';
+  mapContainer.style.cssText = `
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1;
+  `;
   app.appendChild(mapContainer);
 
   // Инициализирай картата
   const map = L.map('map', {
     center: [HOTEL.lat, HOTEL.lng],
     zoom: 14,
-    zoomControl: true,
+    zoomControl: false,
     scrollWheelZoom: true,
-    dragging: true
+    dragging: true,
+    tap: true
   });
 
   // Добави Google Maps Tiles
@@ -553,176 +551,174 @@ document.addEventListener('DOMContentLoaded', function() {
     subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
   }).addTo(map);
 
-  // Добави контрол за смяна на типа карта
+  // Добави контрол за смяна на типа карта (опростен за мобилни)
   const baseLayers = {
-    "🗺️ Street": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+    "🗺️": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
       attribution: '&copy; Google Maps'
     }),
-    "🛰️ Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-      attribution: '&copy; Google Maps'
-    }),
-    "🌍 Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+    "🛰️": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
       attribution: '&copy; Google Maps'
     })
   };
 
-  L.control.layers(baseLayers).addTo(map);
+  L.control.layers(baseLayers, null, { position: 'bottomright' }).addTo(map);
 
-  // Създай маркер за хотела
+  // Добави zoom контрол
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+  // Създай маркер за хотела (по-малък за мобилни)
   const hotelIconHtml = `
     <div style="
       background: ${HOTEL_COLORS.primary};
       border-radius: 50%;
-      border: 3px solid ${HOTEL_COLORS.white};
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      border: 2px solid ${HOTEL_COLORS.white};
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
       text-align: center;
-      width: 60px;
-      height: 60px;
+      width: 44px;
+      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 30px;
-      position: relative;
     ">
-      <img src="/hotel-logo.svg" style="width: 50px; height: 50px; border-radius: 50%;" />
+      <img src="/hotel-logo.svg" style="width: 34px; height: 34px; border-radius: 50%;" />
     </div>
   `;
 
   const hotelIcon = L.divIcon({
     className: 'hotel-marker-custom',
     html: hotelIconHtml,
-    iconSize: [60, 60],
-    iconAnchor: [30, 30]
+    iconSize: [44, 44],
+    iconAnchor: [22, 22]
   });
 
   L.marker([HOTEL.lat, HOTEL.lng], { icon: hotelIcon })
     .addTo(map)
     .bindPopup(`
-      <div style="text-align: center; font-family: Georgia, serif;">
-        <div style="font-size: 18px; font-weight: bold; color: ${HOTEL_COLORS.primary};">🏨 Rosslyn Central Park Hotel</div>
-        <div style="font-size: 12px; color: #666;">⭐⭐⭐⭐</div>
-        <div style="font-size: 12px; color: #666; margin-top: 4px;">📍 бул. Витоша 106, София</div>
-        <div style="font-size: 11px; color: ${HOTEL_COLORS.primary}; margin-top: 4px;">⭐ Начална и крайна точка</div>
+      <div style="text-align: center; font-size: 12px;">
+        <strong>Rosslyn Central Park Hotel</strong><br>
+        📍 бул. Витоша 106
       </div>
     `);
 
-  // Създай главния панел
+  // Създай главния панел - мобилно оптимизиран
   const panel = document.createElement('div');
   panel.id = 'main-panel';
   panel.style.cssText = `
-    position: absolute; 
-    top: 20px; 
-    left: 20px; 
-    z-index: 1000; 
-    background: white; 
-    border-radius: 16px; 
-    box-shadow: 0 8px 32px rgba(26, 35, 126, 0.2); 
-    max-width: 420px; 
-    max-height: 90vh; 
-    overflow-y: auto; 
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-    width: calc(100% - 40px);
-    border: 2px solid ${HOTEL_COLORS.white};
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+    max-height: 65vh;
+    overflow-y: auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 0;
+    transition: max-height 0.3s ease;
+    border-top: 3px solid ${HOTEL_COLORS.primary};
   `;
   
-  // Header
+  // Header - опростен за мобилни
   const header = document.createElement('div');
   header.style.cssText = `
-    padding: 20px 20px 15px 20px; 
+    padding: 14px 16px 10px 16px;
     background: linear-gradient(135deg, ${HOTEL_COLORS.primary}, ${HOTEL_COLORS.secondary});
-    border-radius: 14px 14px 0 0;
+    border-radius: 20px 20px 0 0;
     text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   `;
   header.innerHTML = `
-    <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 6px;">
+    <div style="display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 4px;">
       <button id="lang-toggle" style="
-        background: rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.15);
         color: white;
-        border: 1px solid rgba(255,255,255,0.3);
-        border-radius: 20px;
-        padding: 4px 12px;
-        font-size: 11px;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 16px;
+        padding: 2px 10px;
+        font-size: 10px;
         cursor: pointer;
-        transition: all 0.3s;
         font-weight: 600;
       ">${texts.language}</button>
     </div>
-    <h1 style="margin: 0; color: ${HOTEL_COLORS.white}; font-size: 22px; font-family: Georgia, serif; letter-spacing: 1px; font-weight: 700;">
-      Rosslyn Central Park Hotel
-    </h1>
-    <p style="margin: 4px 0 0 0; color: ${HOTEL_COLORS.white}; font-size: 12px; opacity: 0.8; letter-spacing: 1px;">
-      ⭐⭐⭐⭐ Sofia
-    </p>
-    <p style="margin: 2px 0 0 0; color: ${HOTEL_COLORS.white}; font-size: 10px; opacity: 0.6;">
-      📍 бул. Витоша 106
-    </p>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+      <span style="font-size: 20px;">🏨</span>
+      <div>
+        <div style="color: ${HOTEL_COLORS.white}; font-size: 15px; font-weight: 700; font-family: Georgia, serif; letter-spacing: 0.5px;">
+          Rosslyn Central Park Hotel
+        </div>
+        <div style="color: rgba(255,255,255,0.7); font-size: 9px;">
+          ⭐⭐⭐⭐ Sofia - бул. Витоша 106
+        </div>
+      </div>
+    </div>
   `;
   panel.appendChild(header);
 
-  // Време
+  // Време - опростено
   const weather = getWeather();
   const weatherDiv = document.createElement('div');
   weatherDiv.style.cssText = `
-    padding: 10px 20px; 
-    background: #f8f9fa; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    border-bottom: 2px solid ${HOTEL_COLORS.primary};
+    padding: 8px 16px;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
   `;
   weatherDiv.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 8px;">
-      <span style="font-size: 24px;">${weather.icon}</span>
-      <div>
-        <span style="font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 15px;">${weather.temp}</span>
-        <span style="color: #7f8c8d; font-size: 12px; margin-left: 4px;">${lang === 'bg' ? weather.weather_bg : weather.weather_en}</span>
-      </div>
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <span style="font-size: 20px;">${weather.icon}</span>
+      <span style="font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 14px;">${weather.temp}</span>
+      <span style="color: #7f8c8d; font-size: 11px;">${lang === 'bg' ? weather.weather_bg : weather.weather_en}</span>
     </div>
-    <div style="display: flex; align-items: center; gap: 6px; background: ${HOTEL_COLORS.primary}; padding: 4px 10px; border-radius: 20px; border: 1px solid ${HOTEL_COLORS.white};">
-      <span style="font-size: 16px;">🕐</span>
-      <span style="font-weight: 700; color: ${HOTEL_COLORS.white}; font-size: 14px;">${new Date().toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}</span>
+    <div style="display: flex; align-items: center; gap: 4px; background: ${HOTEL_COLORS.primary}; padding: 2px 10px; border-radius: 14px;">
+      <span style="font-size: 12px;">🕐</span>
+      <span style="font-weight: 600; color: white; font-size: 12px;">${new Date().toLocaleTimeString('bg-BG', { hour: '2-digit', minute: '2-digit' })}</span>
     </div>
   `;
   panel.appendChild(weatherDiv);
 
-  // Статистики
+  // Статистики - опростени
   const totalDistance = RUNNING_ROUTES.reduce((sum, r) => sum + r.distance, 0);
-  const totalTime = RUNNING_ROUTES.reduce((sum, r) => sum + r.duration, 0);
   
   const statsBar = document.createElement('div');
   statsBar.style.cssText = `
-    padding: 6px 20px;
+    padding: 6px 16px;
     background: ${HOTEL_COLORS.primary};
     display: flex;
     justify-content: space-around;
     align-items: center;
-    color: ${HOTEL_COLORS.white};
-    font-size: 11px;
+    color: white;
+    font-size: 10px;
   `;
   statsBar.innerHTML = `
     <div style="text-align: center;">
-      <div style="font-size: 16px;">🗺️</div>
-      <div style="font-weight: 700;">${RUNNING_ROUTES.length}</div>
-      <div style="font-size: 9px; opacity: 0.8;">${texts.stats_routes}</div>
+      <div style="font-size: 14px;">🗺️</div>
+      <div style="font-weight: 700; font-size: 12px;">${RUNNING_ROUTES.length}</div>
+      <div style="font-size: 8px; opacity: 0.8;">${texts.stats_routes}</div>
     </div>
     <div style="text-align: center;">
-      <div style="font-size: 16px;">📏</div>
-      <div style="font-weight: 700;">${totalDistance} км</div>
-      <div style="font-size: 9px; opacity: 0.8;">${texts.stats_total}</div>
+      <div style="font-size: 14px;">📏</div>
+      <div style="font-weight: 700; font-size: 12px;">${totalDistance}км</div>
+      <div style="font-size: 8px; opacity: 0.8;">${texts.stats_total}</div>
     </div>
     <div style="text-align: center;">
-      <div style="font-size: 16px;">⏱️</div>
-      <div style="font-weight: 700;">${totalTime} мин</div>
-      <div style="font-size: 9px; opacity: 0.8;">${texts.stats_time}</div>
+      <div style="font-size: 14px;">⏱️</div>
+      <div style="font-weight: 700; font-size: 12px;">${RUNNING_ROUTES.reduce((sum, r) => sum + r.duration, 0)}мин</div>
+      <div style="font-size: 8px; opacity: 0.8;">${texts.stats_time}</div>
     </div>
   `;
   panel.appendChild(statsBar);
 
-  // Списък с маршрути
+  // Списък с маршрути - скролващ
   const routeSection = document.createElement('div');
-  routeSection.style.cssText = 'padding: 12px 16px;';
+  routeSection.style.cssText = 'padding: 10px 14px; max-height: 35vh; overflow-y: auto;';
   routeSection.innerHTML = `
-    <p style="margin: 0 0 10px 0; color: ${HOTEL_COLORS.primary}; font-size: 13px; font-weight: 700; border-bottom: 2px solid ${HOTEL_COLORS.primary}; padding-bottom: 6px;">
+    <p style="margin: 0 0 8px 0; color: ${HOTEL_COLORS.primary}; font-size: 12px; font-weight: 700; border-bottom: 2px solid ${HOTEL_COLORS.primary}; padding-bottom: 4px;">
       ${texts.routes}
     </p>
   `;
@@ -736,52 +732,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const difficulty = lang === 'bg' ? route.difficulty_bg : route.difficulty_en;
     
     item.style.cssText = `
-      padding: 12px 14px; 
-      margin-bottom: 10px; 
-      border-left: 4px solid ${borderColor}; 
-      background: #f8f9fa; 
-      border-radius: 8px; 
-      cursor: pointer; 
-      transition: all 0.3s;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border-left: 4px solid ${borderColor};
+      background: #f8f9fa;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
     `;
-    item.onmouseover = function() { 
-      this.style.backgroundColor = '#e9ecef'; 
-      this.style.transform = 'translateX(4px)'; 
-      this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+    item.ontouchend = function() {
+      showRouteDetails(route);
     };
-    item.onmouseout = function() { 
-      this.style.backgroundColor = '#f8f9fa'; 
-      this.style.transform = 'translateX(0)';
-      this.style.boxShadow = 'none';
+    item.onclick = function() {
+      showRouteDetails(route);
     };
     
     const difficultyStars = difficulty === 'Лесен' || difficulty === 'Easy' ? '⭐' : 
                            difficulty === 'Среден' || difficulty === 'Moderate' ? '⭐⭐' : '⭐⭐⭐';
     
-    const timeIcon = route.duration <= 30 ? '⚡' : route.duration <= 50 ? '🏃' : '🏔️';
-    
     item.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: start;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
         <div style="flex: 1;">
-          <div style="font-weight: 700; color: #2c3e50; font-size: 15px;">${name}</div>
-          <div style="font-size: 11px; color: #7f8c8d; margin: 3px 0;">${description}</div>
-          <div style="display: flex; gap: 10px; font-size: 11px; color: #7f8c8d; margin-top: 4px; flex-wrap: wrap;">
-            <span>📏 ${route.distance} км</span>
-            <span>⏱️ ${route.duration} мин</span>
-            <span>🔥 ${route.calories} кал</span>
+          <div style="font-weight: 700; color: #2c3e50; font-size: 14px;">${name}</div>
+          <div style="font-size: 10px; color: #7f8c8d; margin: 2px 0;">${description}</div>
+          <div style="display: flex; gap: 8px; font-size: 10px; color: #7f8c8d; flex-wrap: wrap;">
+            <span>📏 ${route.distance}км</span>
+            <span>⏱️ ${route.duration}мин</span>
+            <span>🔥 ${route.calories}кал</span>
             <span>${difficultyStars}</span>
           </div>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 4px; margin-left: 8px; align-items: flex-end;">
-          <span style="background: ${borderColor}; color: white; padding: 2px 10px; border-radius: 12px; font-size: 9px; white-space: nowrap; font-weight: 600;">${difficulty}</span>
-          <span style="font-size: 18px;">${timeIcon}</span>
+        <div style="margin-left: 8px;">
+          <span style="background: ${borderColor}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 8px; font-weight: 600;">${difficulty}</span>
         </div>
       </div>
     `;
-    
-    item.onclick = function() {
-      showRouteDetails(route);
-    };
     list.appendChild(item);
   });
   routeSection.appendChild(list);
@@ -790,28 +775,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Детайли за маршрута
   const detailsDiv = document.createElement('div');
   detailsDiv.id = 'route-details';
-  detailsDiv.style.cssText = 'padding: 0 16px 16px 16px; display: none; border-top: 2px solid ' + HOTEL_COLORS.primary + ';';
+  detailsDiv.style.cssText = 'padding: 0 14px 14px 14px; display: none; border-top: 2px solid ' + HOTEL_COLORS.primary + '; max-height: 45vh; overflow-y: auto;';
   panel.appendChild(detailsDiv);
-
-  // Footer
-  const footer = document.createElement('div');
-  footer.style.cssText = `
-    padding: 10px 16px;
-    background: linear-gradient(135deg, ${HOTEL_COLORS.primary}, ${HOTEL_COLORS.secondary});
-    border-radius: 0 0 14px 14px;
-    text-align: center;
-    color: ${HOTEL_COLORS.white};
-    font-size: 9px;
-    opacity: 0.8;
-  `;
-  footer.innerHTML = `
-    <span style="color: ${HOTEL_COLORS.white};">✦</span> 
-    Rosslyn Central Park Hotel - бул. Витоша 106 
-    <span style="color: ${HOTEL_COLORS.white};">✦</span>
-    <br>
-    <span style="font-size: 7px; opacity: 0.6;">🌐 Google Maps | 🛡️ Safe Routes | 🌍 ${lang === 'bg' ? 'Български' : 'English'}</span>
-  `;
-  panel.appendChild(footer);
 
   app.appendChild(panel);
 
@@ -837,48 +802,48 @@ document.addEventListener('DOMContentLoaded', function() {
     let warningsHtml = '';
     if (warnings && warnings.length > 0) {
       warningsHtml = `
-        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px;">
+        <div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 6px 10px; margin-bottom: 8px;">
           ${warnings.map(function(w) {
-            return '<div style="font-size: 12px; color: #856404; padding: 2px 0;">⚠️ ' + w.message + '</div>';
+            return '<div style="font-size: 11px; color: #856404; padding: 1px 0;">⚠️ ' + w.message + '</div>';
           }).join('')}
         </div>
       `;
     }
     
     const navHtml = `
-      <div style="margin-top: 12px;">
-        <div style="background: #d4edda; border: 1px solid #28a745; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px;">
-          <span style="font-size: 14px;">🛡️</span>
-          <span style="font-size: 12px; color: #155724; font-weight: 600;">${texts.safe}</span>
+      <div style="margin-top: 10px;">
+        <div style="background: #d4edda; border: 1px solid #28a745; border-radius: 6px; padding: 6px 10px; margin-bottom: 8px;">
+          <span style="font-size: 12px;">🛡️</span>
+          <span style="font-size: 11px; color: #155724; font-weight: 600;">${texts.safe}</span>
         </div>
         ${warningsHtml}
-        <h4 style="margin: 0 0 6px 0; color: ${HOTEL_COLORS.primary}; font-size: 14px;">${texts.navigation}</h4>
-        <div style="background: #f8f9fa; border-radius: 8px; padding: 8px 12px; max-height: 150px; overflow-y: auto; font-size: 12px; line-height: 1.8; border-left: 3px solid ${HOTEL_COLORS.primary};">
-          ${directions.map(function(d) { return '<div style="padding: 2px 0;">' + d + '</div>'; }).join('')}
+        <h4 style="margin: 0 0 4px 0; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${texts.navigation}</h4>
+        <div style="background: #f8f9fa; border-radius: 6px; padding: 6px 10px; max-height: 100px; overflow-y: auto; font-size: 11px; line-height: 1.6; border-left: 3px solid ${HOTEL_COLORS.primary};">
+          ${directions.map(function(d) { return '<div style="padding: 1px 0;">' + d + '</div>'; }).join('')}
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-top: 10px; text-align: center; background: linear-gradient(135deg, #f8f9fa, #e9ecef); border-radius: 8px; padding: 10px; border: 1px solid ${HOTEL_COLORS.primary};">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 8px; text-align: center; background: #f8f9fa; border-radius: 6px; padding: 8px;">
         <div>
-          <span style="display: block; font-size: 18px;">📏</span>
-          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 14px;">${route.distance} км</span>
-          <span style="display: block; font-size: 9px; color: #7f8c8d;">${texts.distance}</span>
+          <span style="display: block; font-size: 16px;">📏</span>
+          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${route.distance}км</span>
+          <span style="display: block; font-size: 8px; color: #7f8c8d;">${texts.distance}</span>
         </div>
         <div>
-          <span style="display: block; font-size: 18px;">⏱️</span>
-          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 14px;">${route.duration} мин</span>
-          <span style="display: block; font-size: 9px; color: #7f8c8d;">${texts.time}</span>
+          <span style="display: block; font-size: 16px;">⏱️</span>
+          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${route.duration}мин</span>
+          <span style="display: block; font-size: 8px; color: #7f8c8d;">${texts.time}</span>
         </div>
         <div>
-          <span style="display: block; font-size: 18px;">🔥</span>
-          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 14px;">${route.calories} кал</span>
-          <span style="display: block; font-size: 9px; color: #7f8c8d;">${texts.calories}</span>
+          <span style="display: block; font-size: 16px;">🔥</span>
+          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${route.calories}кал</span>
+          <span style="display: block; font-size: 8px; color: #7f8c8d;">${texts.calories}</span>
         </div>
       </div>
-      <div style="display: flex; gap: 6px; margin-top: 10px;">
-        <button id="start-route-btn" style="flex: 2; padding: 10px; background: linear-gradient(135deg, ${route.color}, ${route.color}dd); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+      <div style="display: flex; gap: 6px; margin-top: 8px;">
+        <button id="start-route-btn" style="flex: 2; padding: 10px; background: linear-gradient(135deg, ${route.color}, ${route.color}dd); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;">
           ${texts.start_route}
         </button>
-        <button id="close-details-btn" style="flex: 1; padding: 10px; background: #e9ecef; color: ${HOTEL_COLORS.primary}; border: 1px solid #dee2e6; border-radius: 8px; font-size: 13px; cursor: pointer; transition: all 0.3s;">
+        <button id="close-details-btn" style="flex: 1; padding: 10px; background: #e9ecef; color: ${HOTEL_COLORS.primary}; border: none; border-radius: 8px; font-size: 13px; cursor: pointer;">
           ${texts.close}
         </button>
       </div>
@@ -921,7 +886,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const polyline = L.polyline(route.points, {
       color: route.color,
-      weight: 5,
+      weight: 4,
       opacity: 0.9,
       smoothFactor: 1,
       lineJoin: 'round'
@@ -932,10 +897,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const warningIcon = L.divIcon({
           className: 'warning-marker',
           html: '⚠️',
-          iconSize: [30, 30],
-          iconAnchor: [15, 15]
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
         });
-        
         L.marker([warning.lat, warning.lng], { icon: warningIcon })
           .addTo(map)
           .bindPopup(warning.message);
@@ -948,19 +912,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const startIcon = L.divIcon({
       className: 'start-marker',
       html: '🏁',
-      iconSize: [30, 30],
-      iconAnchor: [15, 15]
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
     });
     
     const endIcon = L.divIcon({
       className: 'end-marker',
       html: '🏁',
-      iconSize: [30, 30],
-      iconAnchor: [15, 15]
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
     });
     
-    const startLabel = lang === 'bg' ? '🏁 Старт - Хотела' : '🏁 Start - Hotel';
-    const endLabel = lang === 'bg' ? '🏁 Финал - Хотела' : '🏁 Finish - Hotel';
+    const startLabel = lang === 'bg' ? '🏁 Старт' : '🏁 Start';
+    const endLabel = lang === 'bg' ? '🏁 Финал' : '🏁 Finish';
     
     L.marker(startPoint, { icon: startIcon })
       .addTo(map)
@@ -971,10 +935,10 @@ document.addEventListener('DOMContentLoaded', function() {
       .bindPopup(endLabel);
     
     const bounds = L.latLngBounds(route.points);
-    map.fitBounds(bounds, { padding: [50, 50] });
+    map.fitBounds(bounds, { padding: [40, 40] });
     
     const name = lang === 'bg' ? route.name_bg : route.name_en;
-    polyline.bindPopup('<strong>' + name + '</strong><br>📏 ' + route.distance + ' км | ⏱️ ' + route.duration + ' мин | 🔥 ' + route.calories + ' кал');
+    polyline.bindPopup('<strong>' + name + '</strong>');
     polyline.openPopup();
   }
 
@@ -1005,7 +969,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const animatedPolyline = L.polyline([], {
       color: route.color,
-      weight: 6,
+      weight: 5,
       opacity: 0.9,
       smoothFactor: 1,
       lineJoin: 'round'
@@ -1022,8 +986,8 @@ document.addEventListener('DOMContentLoaded', function() {
           const pulseIcon = L.divIcon({
             className: 'pulse-marker',
             html: '🔵',
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
+            iconSize: [16, 16],
+            iconAnchor: [8, 8]
           });
           L.marker(points[index], { icon: pulseIcon }).addTo(map);
         }
@@ -1039,8 +1003,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const warningIcon = L.divIcon({
               className: 'warning-marker',
               html: '⚠️',
-              iconSize: [30, 30],
-              iconAnchor: [15, 15]
+              iconSize: [24, 24],
+              iconAnchor: [12, 12]
             });
             L.marker([warning.lat, warning.lng], { icon: warningIcon })
               .addTo(map)
@@ -1051,19 +1015,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const startIcon = L.divIcon({
           className: 'start-marker',
           html: '🏁',
-          iconSize: [40, 40],
-          iconAnchor: [20, 20]
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
         });
         
         const endIcon = L.divIcon({
           className: 'end-marker',
           html: '🏁',
-          iconSize: [40, 40],
-          iconAnchor: [20, 20]
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
         });
         
-        const startLabel = lang === 'bg' ? '🏁 Старт - Хотела' : '🏁 Start - Hotel';
-        const endLabel = lang === 'bg' ? '🏁 Финал - Хотела' : '🏁 Finish - Hotel';
+        const startLabel = lang === 'bg' ? '🏁 Старт' : '🏁 Start';
+        const endLabel = lang === 'bg' ? '🏁 Финал' : '🏁 Finish';
         
         L.marker(points[0], { icon: startIcon })
           .addTo(map)
@@ -1082,85 +1046,51 @@ document.addEventListener('DOMContentLoaded', function() {
           };
         }, 2000);
       }
-    }, 350);
+    }, 300);
     
     const bounds = L.latLngBounds(route.points);
-    map.fitBounds(bounds, { padding: [50, 50] });
+    map.fitBounds(bounds, { padding: [40, 40] });
   }
 
-  // CSS
+  // CSS - мобилно оптимизиран
   const style = document.createElement('style');
   style.textContent = `
-    .hotel-marker-custom {
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-    }
-    .start-marker, .end-marker {
-      background: transparent !important;
-      border: none !important;
-      font-size: 24px !important;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-    .warning-marker {
-      background: transparent !important;
-      border: none !important;
-      font-size: 22px !important;
-      text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
-      animation: pulse-warning 1s infinite;
-    }
-    .pulse-marker {
-      background: transparent !important;
-      border: none !important;
-      font-size: 14px !important;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; overflow: hidden; height: 100vh; }
+    
+    .hotel-marker-custom { background: transparent !important; border: none !important; }
+    .start-marker, .end-marker { background: transparent !important; border: none !important; font-size: 20px !important; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+    .warning-marker { background: transparent !important; border: none !important; font-size: 18px !important; text-shadow: 0 0 8px rgba(255,0,0,0.4); animation: pulse-warning 1s infinite; }
+    .pulse-marker { background: transparent !important; border: none !important; font-size: 12px !important; }
+    
     @keyframes pulse-warning {
       0% { transform: scale(1); }
-      50% { transform: scale(1.3); }
+      50% { transform: scale(1.2); }
       100% { transform: scale(1); }
     }
-    #main-panel::-webkit-scrollbar {
-      width: 5px;
+    
+    #main-panel::-webkit-scrollbar { width: 3px; }
+    #main-panel::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+    #main-panel::-webkit-scrollbar-thumb { background: ${HOTEL_COLORS.primary}; border-radius: 3px; }
+    
+    .leaflet-popup-content-wrapper { border-radius: 10px !important; border: 2px solid ${HOTEL_COLORS.primary} !important; }
+    .leaflet-popup-tip { background: ${HOTEL_COLORS.primary} !important; }
+    .leaflet-control-layers { border-radius: 8px !important; border: 2px solid ${HOTEL_COLORS.primary} !important; }
+    .leaflet-control-zoom a { background: white !important; color: #333 !important; border: none !important; border-radius: 4px !important; }
+    .leaflet-control-zoom { border: none !important; box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important; }
+    
+    #lang-toggle:hover { background: rgba(255,255,255,0.25) !important; }
+    
+    @media (max-width: 768px) {
+      #main-panel { max-height: 60vh; border-radius: 16px 16px 0 0; }
+      #main-panel .route-item { padding: 8px 10px; }
+      .leaflet-control-zoom a { width: 30px !important; height: 30px !important; line-height: 30px !important; font-size: 14px !important; }
     }
-    #main-panel::-webkit-scrollbar-track {
-      background: #f1f1f1;
-      border-radius: 3px;
-    }
-    #main-panel::-webkit-scrollbar-thumb {
-      background: ${HOTEL_COLORS.primary};
-      border-radius: 3px;
-    }
-    #main-panel::-webkit-scrollbar-thumb:hover {
-      background: ${HOTEL_COLORS.secondary};
-    }
-    .leaflet-popup-content-wrapper {
-      border-radius: 12px !important;
-      border: 2px solid ${HOTEL_COLORS.primary} !important;
-    }
-    .leaflet-popup-tip {
-      background: ${HOTEL_COLORS.primary} !important;
-    }
-    .leaflet-control-layers {
-      border-radius: 8px !important;
-      border: 2px solid ${HOTEL_COLORS.primary} !important;
-    }
-    #lang-toggle:hover {
-      background: rgba(255,255,255,0.3) !important;
-      transform: scale(1.05);
-    }
+    
     @media (max-width: 480px) {
-      #main-panel {
-        top: 10px;
-        left: 10px;
-        width: calc(100% - 20px);
-        max-height: 85vh;
-      }
-      .start-marker, .end-marker {
-        font-size: 18px !important;
-      }
-      .warning-marker {
-        font-size: 16px !important;
-      }
+      #main-panel { max-height: 55vh; border-radius: 12px 12px 0 0; }
+      #main-panel .route-item { padding: 6px 8px; margin-bottom: 4px; }
+      .leaflet-control-zoom a { width: 26px !important; height: 26px !important; line-height: 26px !important; font-size: 12px !important; }
     }
   `;
   document.head.appendChild(style);
