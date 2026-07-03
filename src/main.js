@@ -12,7 +12,8 @@ const HOTEL = {
 const HOTEL_COLORS = {
   primary: '#1a237e',
   secondary: '#0d47a1',
-  white: '#ffffff'
+  white: '#ffffff',
+  gold: '#ffd700'
 };
 
 // Език
@@ -380,7 +381,7 @@ function getTexts(lang) {
     title: 'Rosslyn Central Park Hotel',
     stars: '⭐⭐⭐⭐ Sofia',
     address: lang === 'bg' ? '📍 бул. Витоша 106' : '📍 106 Vitoshka Blvd',
-    routes: lang === 'bg' ? '🏃 Избери маршрут' : '🏃 Choose route',
+    routes: lang === 'bg' ? '🏃 Избери маршрут' : '🏃 Choose a running route',
     stats_routes: lang === 'bg' ? 'Маршрута' : 'Routes',
     stats_total: lang === 'bg' ? 'Общо' : 'Total',
     stats_time: lang === 'bg' ? 'Общо време' : 'Total time',
@@ -564,7 +565,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div style="
       background: ${HOTEL_COLORS.primary};
       border-radius: 50%;
-      border: 2px solid ${HOTEL_COLORS.white};
+      border: 2px solid ${HOTEL_COLORS.gold};
       box-shadow: 0 2px 12px rgba(0,0,0,0.3);
       text-align: center;
       width: 44px;
@@ -573,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
       align-items: center;
       justify-content: center;
     ">
-      <img src="/hotel-logo.svg" style="width: 34px; height: 34px; border-radius: 50%;" />
+      <span style="font-size: 22px;">🏨</span>
     </div>
   `;
 
@@ -609,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
     overflow-y: auto;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     padding: 0;
-    border-top: 3px solid ${HOTEL_COLORS.primary};
+    border-top: 3px solid ${HOTEL_COLORS.gold};
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     transform: translateY(0);
   `;
@@ -644,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <div style="color: ${HOTEL_COLORS.white}; font-size: 15px; font-weight: 700; font-family: Georgia, serif; letter-spacing: 0.5px;">
           Rosslyn Central Park Hotel
         </div>
-        <div style="color: rgba(255,255,255,0.7); font-size: 9px;">
+        <div style="color: ${HOTEL_COLORS.gold}; font-size: 9px; letter-spacing: 1px;">
           ⭐⭐⭐⭐ Sofia - бул. Витоша 106
         </div>
       </div>
@@ -697,12 +698,12 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
     <div style="text-align: center;">
       <div style="font-size: 14px;">📏</div>
-      <div style="font-weight: 700; font-size: 12px;">${totalDistance}км</div>
+      <div style="font-weight: 700; font-size: 12px;">${totalDistance} км</div>
       <div style="font-size: 8px; opacity: 0.8;">${texts.stats_total}</div>
     </div>
     <div style="text-align: center;">
       <div style="font-size: 14px;">⏱️</div>
-      <div style="font-weight: 700; font-size: 12px;">${RUNNING_ROUTES.reduce((sum, r) => sum + r.duration, 0)}мин</div>
+      <div style="font-weight: 700; font-size: 12px;">${RUNNING_ROUTES.reduce((sum, r) => sum + r.duration, 0)} мин</div>
       <div style="font-size: 8px; opacity: 0.8;">${texts.stats_time}</div>
     </div>
   `;
@@ -718,7 +719,7 @@ document.addEventListener('DOMContentLoaded', function() {
   routeSection.id = 'route-list';
   routeSection.style.cssText = 'padding: 10px 14px; max-height: 35vh; overflow-y: auto;';
   routeSection.innerHTML = `
-    <p style="margin: 0 0 8px 0; color: ${HOTEL_COLORS.primary}; font-size: 12px; font-weight: 700; border-bottom: 2px solid ${HOTEL_COLORS.primary}; padding-bottom: 4px;">
+    <p style="margin: 0 0 8px 0; color: ${HOTEL_COLORS.primary}; font-size: 12px; font-weight: 700; border-bottom: 2px solid ${HOTEL_COLORS.gold}; padding-bottom: 4px;">
       ${texts.routes}
     </p>
   `;
@@ -753,9 +754,9 @@ document.addEventListener('DOMContentLoaded', function() {
           <div style="font-weight: 700; color: #2c3e50; font-size: 14px;">${name}</div>
           <div style="font-size: 10px; color: #7f8c8d; margin: 2px 0;">${description}</div>
           <div style="display: flex; gap: 8px; font-size: 10px; color: #7f8c8d; flex-wrap: wrap;">
-            <span>📏 ${route.distance}км</span>
-            <span>⏱️ ${route.duration}мин</span>
-            <span>🔥 ${route.calories}кал</span>
+            <span>📏 ${route.distance} км</span>
+            <span>⏱️ ${route.duration} мин</span>
+            <span>🔥 ${route.calories} кал</span>
             <span>${difficultyStars}</span>
           </div>
         </div>
@@ -787,7 +788,6 @@ document.addEventListener('DOMContentLoaded', function() {
   function hidePanel() {
     const panel = document.getElementById('main-panel');
     panel.style.transform = 'translateY(calc(100% - 60px))';
-    // Показваме малък индикатор, че панелът може да се върне
     const handle = document.createElement('div');
     handle.id = 'panel-handle';
     handle.style.cssText = `
@@ -805,6 +805,8 @@ document.addEventListener('DOMContentLoaded', function() {
       cursor: pointer;
       box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
       transition: all 0.3s ease;
+      border: 1px solid ${HOTEL_COLORS.gold};
+      border-bottom: none;
     `;
     handle.textContent = '▲ ' + (currentLanguage === 'bg' ? 'Покажи маршрутите' : 'Show routes');
     handle.onclick = function() {
@@ -830,7 +832,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const routeList = document.getElementById('route-list');
     const detailsDiv = document.getElementById('route-details');
     
-    // Скриваме списъка и показваме детайлите
     routeList.style.display = 'none';
     detailsDiv.style.display = 'block';
     detailsDiv.innerHTML = '';
@@ -884,20 +885,20 @@ document.addEventListener('DOMContentLoaded', function() {
           ${directions.map(function(d) { return '<div style="padding: 1px 0;">' + d + '</div>'; }).join('')}
         </div>
       </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 8px; text-align: center; background: #f8f9fa; border-radius: 6px; padding: 8px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-top: 8px; text-align: center; background: #f8f9fa; border-radius: 6px; padding: 8px; border: 1px solid ${HOTEL_COLORS.gold};">
         <div>
           <span style="display: block; font-size: 16px;">📏</span>
-          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${route.distance}км</span>
+          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${route.distance} км</span>
           <span style="display: block; font-size: 8px; color: #7f8c8d;">${texts.distance}</span>
         </div>
         <div>
           <span style="display: block; font-size: 16px;">⏱️</span>
-          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${route.duration}мин</span>
+          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${route.duration} мин</span>
           <span style="display: block; font-size: 8px; color: #7f8c8d;">${texts.time}</span>
         </div>
         <div>
           <span style="display: block; font-size: 16px;">🔥</span>
-          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${route.calories}кал</span>
+          <span style="display: block; font-weight: 700; color: ${HOTEL_COLORS.primary}; font-size: 13px;">${route.calories} кал</span>
           <span style="display: block; font-size: 8px; color: #7f8c8d;">${texts.calories}</span>
         </div>
       </div>
@@ -915,7 +916,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     showRouteOnMap(route);
     
-    // Бутон за връщане към списъка с маршрути
     document.getElementById('back-to-routes-btn').addEventListener('click', function() {
       routeList.style.display = 'block';
       detailsDiv.style.display = 'none';
@@ -927,14 +927,12 @@ document.addEventListener('DOMContentLoaded', function() {
       map.setView([HOTEL.lat, HOTEL.lng], 14);
     });
     
-    // Бутон за скриване на панела (само карта)
     document.getElementById('hide-panel-btn').addEventListener('click', function() {
       hidePanel();
     });
     
     document.getElementById('start-route-btn').addEventListener('click', function() {
       startRoute(route);
-      // След стартиране скриваме панела автоматично
       setTimeout(function() {
         hidePanel();
       }, 500);
@@ -1157,9 +1155,9 @@ document.addEventListener('DOMContentLoaded', function() {
     #main-panel::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
     #main-panel::-webkit-scrollbar-thumb { background: ${HOTEL_COLORS.primary}; border-radius: 3px; }
     
-    .leaflet-popup-content-wrapper { border-radius: 10px !important; border: 2px solid ${HOTEL_COLORS.primary} !important; }
-    .leaflet-popup-tip { background: ${HOTEL_COLORS.primary} !important; }
-    .leaflet-control-layers { border-radius: 8px !important; border: 2px solid ${HOTEL_COLORS.primary} !important; }
+    .leaflet-popup-content-wrapper { border-radius: 10px !important; border: 2px solid ${HOTEL_COLORS.gold} !important; }
+    .leaflet-popup-tip { background: ${HOTEL_COLORS.gold} !important; }
+    .leaflet-control-layers { border-radius: 8px !important; border: 2px solid ${HOTEL_COLORS.gold} !important; }
     .leaflet-control-zoom a { background: white !important; color: #333 !important; border: none !important; border-radius: 4px !important; }
     .leaflet-control-zoom { border: none !important; box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important; }
     
